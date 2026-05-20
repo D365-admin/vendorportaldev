@@ -26,8 +26,9 @@ app = FastAPI(
 origins = [
     # "http://10.10.0.101:9000",
     # "http://10.10.0.101.8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://hiqvendorportal.azurewebsites.net/"
+    # "http://localhost:3000",
+    # "http://127.0.0.1:3000",
     # "http://127.0.0.1:8000",
     # "http://localhost:8000",
     # "http://192.168.10.29:3000",
