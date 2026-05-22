@@ -961,28 +961,86 @@ def already_sent_reminder(vendor_account: str, rfq_case_id: str) -> bool:
         )
         return cur.fetchone()[0] > 0
 
-
 def get_all_expiring_rfqs_with_vendors():
+
     q = """
-    SELECT C.RFQCASEID, T.RFQID, C.NAME, C.EXPIRYDATETIME, V.VENDACCOUNT
-    FROM PURCHRFQCASETABLE C WITH (NOLOCK)
-    INNER JOIN PURCHRFQVENDLINK V WITH (NOLOCK)
-        ON V.RFQCASEID=C.RFQCASEID AND V.DATAAREAID=C.DATAAREAID
-    INNER JOIN PURCHRFQTABLE T WITH (NOLOCK)
-        ON T.RFQCASEID=C.RFQCASEID AND T.VENDACCOUNT=V.VENDACCOUNT AND T.DATAAREAID=C.DATAAREAID
-    WHERE C.DATAAREAID=?
-      AND CAST(C.EXPIRYDATETIME AS DATE)=CAST(DATEADD(DAY,1,GETDATE()) AS DATE)
+    SELECT
+
+        C.RFQCASEID,
+
+        T.RFQID,
+
+        C.NAME,
+
+        C.EXPIRYDATETIME,
+
+        V.VENDACCOUNT
+
+    FROM D365_PURCHRFQCASETABLE C
+    WITH (NOLOCK)
+
+    INNER JOIN D365_PURCHRFQVENDLINK V
+    WITH (NOLOCK)
+
+        ON V.RFQCASEID = C.RFQCASEID
+
+    INNER JOIN D365_PURCHRFQTABLE T
+    WITH (NOLOCK)
+
+        ON T.RFQCASEID = C.RFQCASEID
+       AND T.VENDACCOUNT = V.VENDACCOUNT
+
+    WHERE CAST(C.EXPIRYDATETIME AS DATE)
+            =
+          CAST(DATEADD(DAY,1,GETDATE()) AS DATE)
+
       AND C.EXPIRYDATETIME >= GETDATE()
-      AND C.EXPIRYDATETIME <  DATEADD(HOUR,24,GETDATE())
+
+      AND C.EXPIRYDATETIME <
+            DATEADD(HOUR,24,GETDATE())
     """
-    with get_d365_connection() as conn:
+
+    with get_connection() as conn:
+
         cur = conn.cursor()
-        cur.execute(q, settings.D365_COMPANY)
+
+        cur.execute(q)
+
         rows = cur.fetchall()
+
         if not rows:
             return []
-        cols = [c[0].lower() for c in cur.description]
-        return [dict(zip(cols, row)) for row in rows]
+
+        cols = [
+            c[0].lower()
+            for c in cur.description
+        ]
+
+        return [
+            dict(zip(cols, row))
+            for row in rows
+        ]
+# def get_all_expiring_rfqs_with_vendors():
+#     q = """
+#     SELECT C.RFQCASEID, T.RFQID, C.NAME, C.EXPIRYDATETIME, V.VENDACCOUNT
+#     FROM PURCHRFQCASETABLE C WITH (NOLOCK)
+#     INNER JOIN PURCHRFQVENDLINK V WITH (NOLOCK)
+#         ON V.RFQCASEID=C.RFQCASEID AND V.DATAAREAID=C.DATAAREAID
+#     INNER JOIN PURCHRFQTABLE T WITH (NOLOCK)
+#         ON T.RFQCASEID=C.RFQCASEID AND T.VENDACCOUNT=V.VENDACCOUNT AND T.DATAAREAID=C.DATAAREAID
+#     WHERE C.DATAAREAID=?
+#       AND CAST(C.EXPIRYDATETIME AS DATE)=CAST(DATEADD(DAY,1,GETDATE()) AS DATE)
+#       AND C.EXPIRYDATETIME >= GETDATE()
+#       AND C.EXPIRYDATETIME <  DATEADD(HOUR,24,GETDATE())
+#     """
+#     with get_d365_connection() as conn:
+#         cur = conn.cursor()
+#         cur.execute(q, settings.D365_COMPANY)
+#         rows = cur.fetchall()
+#         if not rows:
+#             return []
+#         cols = [c[0].lower() for c in cur.description]
+#         return [dict(zip(cols, row)) for row in rows]
 
 
 def send_expiry_reminder_emails():

@@ -154,61 +154,100 @@ def release_expired_bids():
 # D365 read → Azure SQL write
 # ══════════════════════════════════════════════════════════
 def sync_new_rfq_notifications():
-    print("[NOTIF] Syncing new RFQ notifications...")
+
+    print(
+        "[NOTIF] "
+        "Syncing new RFQ notifications..."
+    )
 
     try:
-        with get_d365_connection() as d365_conn:
-            cur = d365_conn.cursor()
 
-            cur.execute(
-                """
+        with get_connection() as conn:
+
+            cur = conn.cursor()
+
+            cur.execute("""
                 SELECT
+
                     T.VENDACCOUNT,
+
                     C.RFQCASEID,
+
                     T.RFQID,
+
                     C.NAME
-                FROM PURCHRFQCASETABLE C WITH (NOLOCK)
-                INNER JOIN PURCHRFQTABLE T WITH (NOLOCK)
-                    ON T.RFQCASEID = C.RFQCASEID
-                   AND T.DATAAREAID = C.DATAAREAID
-                WHERE C.DATAAREAID = ?
-                  AND C.EXPIRYDATETIME >= GETDATE()
-                """,
-                settings.D365_COMPANY
-            )
+
+                FROM D365_PURCHRFQCASETABLE C
+                WITH (NOLOCK)
+
+                INNER JOIN D365_PURCHRFQTABLE T
+                WITH (NOLOCK)
+
+                    ON T.RFQCASEID
+                        = C.RFQCASEID
+
+                WHERE C.EXPIRYDATETIME
+                        >= GETDATE()
+            """)
 
             d365_rows = cur.fetchall()
 
         if not d365_rows:
-            print("[NOTIF] No active RFQs")
+
+            print(
+                "[NOTIF] "
+                "No active RFQs"
+            )
+
             return
 
         with get_connection() as vp_conn:
+
             cur = vp_conn.cursor()
 
             cur.execute(f"""
                 SELECT
+
                     VENDORACCOUNT,
+
                     REFERENCEID
+
                 FROM {VEN_NOT}
+
                 WHERE NOTIFTYPE = 1
             """)
 
             already_notified = {
+
                 (
-                    str(r[0]).strip().upper(),
-                    str(r[1]).strip().upper()
+                    str(r[0])
+                    .strip()
+                    .upper(),
+
+                    str(r[1])
+                    .strip()
+                    .upper()
                 )
+
                 for r in cur.fetchall()
             }
 
         for row in d365_rows:
-            vendor_account = str(row[0]).strip()
-            rfq_case_id = str(row[1]).strip()
+
+            vendor_account = (
+                str(row[0]).strip()
+            )
+
+            rfq_case_id = (
+                str(row[1]).strip()
+            )
+
             rfq_name = row[3] or ""
 
             key = (
+
                 vendor_account.upper(),
+
                 rfq_case_id.upper()
             )
 
@@ -216,25 +255,118 @@ def sync_new_rfq_notifications():
                 continue
 
             try:
+
                 notify_new_rfq(
+
                     vendor_account,
+
                     rfq_case_id,
+
                     rfq_name
                 )
 
                 print(
                     f"[NOTIF] NEW_RFQ → "
-                    f"{vendor_account} | {rfq_case_id}"
+                    f"{vendor_account} | "
+                    f"{rfq_case_id}"
                 )
 
             except Exception as e:
+
                 print(
                     f"[NOTIF] Error "
-                    f"{vendor_account} | {rfq_case_id}: {e}"
+                    f"{vendor_account} | "
+                    f"{rfq_case_id}: {e}"
                 )
 
     except Exception as e:
-        print(f"[NOTIF] sync error: {e}")
+
+        print(
+            f"[NOTIF] sync error: {e}"
+        )
+
+# def sync_new_rfq_notifications():
+#     print("[NOTIF] Syncing new RFQ notifications...")
+
+#     try:
+#         with get_d365_connection() as d365_conn:
+#             cur = d365_conn.cursor()
+
+#             cur.execute(
+#                 """
+#                 SELECT
+#                     T.VENDACCOUNT,
+#                     C.RFQCASEID,
+#                     T.RFQID,
+#                     C.NAME
+#                 FROM PURCHRFQCASETABLE C WITH (NOLOCK)
+#                 INNER JOIN PURCHRFQTABLE T WITH (NOLOCK)
+#                     ON T.RFQCASEID = C.RFQCASEID
+#                    AND T.DATAAREAID = C.DATAAREAID
+#                 WHERE C.DATAAREAID = ?
+#                   AND C.EXPIRYDATETIME >= GETDATE()
+#                 """,
+#                 settings.D365_COMPANY
+#             )
+
+#             d365_rows = cur.fetchall()
+
+#         if not d365_rows:
+#             print("[NOTIF] No active RFQs")
+#             return
+
+#         with get_connection() as vp_conn:
+#             cur = vp_conn.cursor()
+
+#             cur.execute(f"""
+#                 SELECT
+#                     VENDORACCOUNT,
+#                     REFERENCEID
+#                 FROM {VEN_NOT}
+#                 WHERE NOTIFTYPE = 1
+#             """)
+
+#             already_notified = {
+#                 (
+#                     str(r[0]).strip().upper(),
+#                     str(r[1]).strip().upper()
+#                 )
+#                 for r in cur.fetchall()
+#             }
+
+#         for row in d365_rows:
+#             vendor_account = str(row[0]).strip()
+#             rfq_case_id = str(row[1]).strip()
+#             rfq_name = row[3] or ""
+
+#             key = (
+#                 vendor_account.upper(),
+#                 rfq_case_id.upper()
+#             )
+
+#             if key in already_notified:
+#                 continue
+
+#             try:
+#                 notify_new_rfq(
+#                     vendor_account,
+#                     rfq_case_id,
+#                     rfq_name
+#                 )
+
+#                 print(
+#                     f"[NOTIF] NEW_RFQ → "
+#                     f"{vendor_account} | {rfq_case_id}"
+#                 )
+
+#             except Exception as e:
+#                 print(
+#                     f"[NOTIF] Error "
+#                     f"{vendor_account} | {rfq_case_id}: {e}"
+#                 )
+
+#     except Exception as e:
+#         print(f"[NOTIF] sync error: {e}")
 
 
 
@@ -243,68 +375,103 @@ def sync_new_rfq_notifications():
 # # D365 read line statuses → Azure SQL write notification
 # ══════════════════════════════════════════════════════════
 def sync_rfq_decision_notifications():
+
     from app.services.notification_service import (
         notify_rfq_accepted,
         notify_rfq_rejected,
     )
 
-    print("[DECISION] Syncing decision notifications...")
+    print(
+        "[DECISION] Syncing decision notifications..."
+    )
 
     try:
+
         with get_connection() as conn:
+
             cur = conn.cursor()
 
+            # ====================================================
+            # FETCH SUBMITTED RFQS
+            # ====================================================
             cur.execute(f"""
                 SELECT DISTINCT
+
                     RFQID,
+
                     VENDORACCOUNT
+
                 FROM {RFQ_REPLIES_TABLE}
+
                 WHERE SUBMISSIONSTATUS = 1
             """)
 
             submitted = cur.fetchall()
 
     except Exception as e:
-        print(f"[DECISION] Read error: {e}")
+
+        print(
+            f"[DECISION] Read error: {e}"
+        )
+
         return
 
     if not submitted:
         return
 
     try:
-        with get_d365_connection() as d365_conn:
-            cur = d365_conn.cursor()
+
+        with get_connection() as conn:
+
+            cur = conn.cursor()
 
             for rfq_id, vendor_account in submitted:
+
                 try:
-                    cur.execute(
-                        """
-                        SELECT PL.STATUS
-                        FROM PURCHRFQREPLYLINE RL WITH (NOLOCK)
-                        INNER JOIN PURCHRFQLINE PL WITH (NOLOCK)
-                            ON PL.RECID = RL.RFQLINERECID
-                           AND PL.DATAAREAID = ?
+
+                    # ============================================
+                    # FETCH LINE STATUS
+                    # ============================================
+                    cur.execute("""
+                        SELECT
+
+                            PL.STATUS
+
+                        FROM D365_PURCHRFQREPLYLINE RL
+                        WITH (NOLOCK)
+
+                        INNER JOIN D365_PURCHRFQLINE PL
+                        WITH (NOLOCK)
+
+                            ON PL.RECID
+                                = RL.RFQLINERECID
+
                         WHERE RL.RFQID = ?
-                          AND RL.DATAAREAID = ?
-                        """,
-                        settings.D365_COMPANY,
-                        rfq_id,
-                        settings.D365_COMPANY
-                    )
+                    """, (rfq_id,))
 
                     statuses = [
+
                         int(r[0])
+
                         for r in cur.fetchall()
+
                         if r[0] is not None
                     ]
 
                     if not statuses:
                         continue
 
+                    # ============================================
+                    # STILL UNDER REVIEW
+                    # ============================================
                     if any(s < 3 for s in statuses):
                         continue
 
+                    # ============================================
+                    # ACCEPTED
+                    # ============================================
                     if any(s == 4 for s in statuses):
+
                         notify_rfq_accepted(
                             vendor_account,
                             rfq_id
@@ -315,7 +482,11 @@ def sync_rfq_decision_notifications():
                             f"{vendor_account} | {rfq_id}"
                         )
 
+                    # ============================================
+                    # REJECTED
+                    # ============================================
                     else:
+
                         notify_rfq_rejected(
                             vendor_account,
                             rfq_id
@@ -327,13 +498,109 @@ def sync_rfq_decision_notifications():
                         )
 
                 except Exception as e:
+
                     print(
                         f"[DECISION] Error "
                         f"{rfq_id}: {e}"
                     )
 
     except Exception as e:
-        print(f"[DECISION] D365 error: {e}")
+
+        print(
+            f"[DECISION] Connection error: {e}"
+        )
+# def sync_rfq_decision_notifications():
+#     from app.services.notification_service import (
+#         notify_rfq_accepted,
+#         notify_rfq_rejected,
+#     )
+
+#     print("[DECISION] Syncing decision notifications...")
+
+#     try:
+#         with get_connection() as conn:
+#             cur = conn.cursor()
+
+#             cur.execute(f"""
+#                 SELECT DISTINCT
+#                     RFQID,
+#                     VENDORACCOUNT
+#                 FROM {RFQ_REPLIES_TABLE}
+#                 WHERE SUBMISSIONSTATUS = 1
+#             """)
+
+#             submitted = cur.fetchall()
+
+#     except Exception as e:
+#         print(f"[DECISION] Read error: {e}")
+#         return
+
+#     if not submitted:
+#         return
+
+#     try:
+#         with get_d365_connection() as d365_conn:
+#             cur = d365_conn.cursor()
+
+#             for rfq_id, vendor_account in submitted:
+#                 try:
+#                     cur.execute(
+#                         """
+#                         SELECT PL.STATUS
+#                         FROM PURCHRFQREPLYLINE RL WITH (NOLOCK)
+#                         INNER JOIN PURCHRFQLINE PL WITH (NOLOCK)
+#                             ON PL.RECID = RL.RFQLINERECID
+#                            AND PL.DATAAREAID = ?
+#                         WHERE RL.RFQID = ?
+#                           AND RL.DATAAREAID = ?
+#                         """,
+#                         settings.D365_COMPANY,
+#                         rfq_id,
+#                         settings.D365_COMPANY
+#                     )
+
+#                     statuses = [
+#                         int(r[0])
+#                         for r in cur.fetchall()
+#                         if r[0] is not None
+#                     ]
+
+#                     if not statuses:
+#                         continue
+
+#                     if any(s < 3 for s in statuses):
+#                         continue
+
+#                     if any(s == 4 for s in statuses):
+#                         notify_rfq_accepted(
+#                             vendor_account,
+#                             rfq_id
+#                         )
+
+#                         print(
+#                             f"[DECISION] ACCEPTED → "
+#                             f"{vendor_account} | {rfq_id}"
+#                         )
+
+#                     else:
+#                         notify_rfq_rejected(
+#                             vendor_account,
+#                             rfq_id
+#                         )
+
+#                         print(
+#                             f"[DECISION] REJECTED → "
+#                             f"{vendor_account} | {rfq_id}"
+#                         )
+
+#                 except Exception as e:
+#                     print(
+#                         f"[DECISION] Error "
+#                         f"{rfq_id}: {e}"
+#                     )
+
+#     except Exception as e:
+#         print(f"[DECISION] D365 error: {e}")
 
 
 # ══════════════════════════════════════════════════════════
