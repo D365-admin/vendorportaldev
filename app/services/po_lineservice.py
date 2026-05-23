@@ -292,7 +292,7 @@ def get_po_details(
     }
 
 # from app.utils.date_utils import format_utc_iso,format_date
-# from app.db.base import get_connection,get_d365_connection
+# from app.db.base import get_connection,get_connection
 
 
 # # ---------------------------------------------------------
@@ -358,7 +358,7 @@ def get_po_details(
 #     WHERE P.PURCHID = ?
 #       AND P.ORDERACCOUNT = ?
 #     """
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #     # with get_connection() as conn:
 #         cursor = conn.cursor()
 #         cursor.execute(query, purch_id, vendor_account)

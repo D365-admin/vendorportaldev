@@ -1066,7 +1066,7 @@ def fetch_submitted_rfq_detail(
                 lines
         }
     }
-# from app.db.base import get_connection, get_d365_connection
+# from app.db.base import get_connection, get_connection
 # from app.utils.date_utils import format_utc_iso
 # from typing import List, Dict, Any, Optional, Set, Tuple
 # import json
@@ -1081,7 +1081,7 @@ def fetch_submitted_rfq_detail(
 # # ============================================================
 # def _get_approved_items(vendor_account: str) -> List[str]:
 #     try:
-#         with get_d365_connection() as conn:
+#         with get_connection() as conn:
 #             cur = conn.cursor()
 #             cur.execute("""
 #                 SELECT LTRIM(RTRIM(ITEMID)) AS ITEMID
@@ -1260,7 +1260,7 @@ def fetch_submitted_rfq_detail(
 #           AND T.RFQID IN ({placeholders})
 #     """
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 
 #         cur.execute(
@@ -1419,7 +1419,7 @@ def fetch_submitted_rfq_detail(
 #     # ========================================================
 #     # STEP 2 — HEADER FROM D365 DB
 #     # ========================================================
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 
 #         cur.execute("""
@@ -1622,7 +1622,7 @@ def fetch_submitted_rfq_detail(
 #     }
 
 
-# # from app.db.base import get_connection, get_d365_connection
+# # from app.db.base import get_connection, get_connection
 # # from app.utils.date_utils import format_date,format_utc_iso
 # # from typing import List, Dict, Any, Optional, Set
 # # import json
@@ -1633,7 +1633,7 @@ def fetch_submitted_rfq_detail(
 # # # ============================================================
 # # def _get_approved_items(vendor_account: str) -> List[str]:
 # #     try:
-# #         with get_d365_connection() as conn:
+# #         with get_connection() as conn:
 # #             cur = conn.cursor()
 # #             cur.execute("""
 # #                 SELECT LTRIM(RTRIM(ITEMID)) AS ITEMID

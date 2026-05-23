@@ -257,7 +257,7 @@ def fetch_vendor_profile(
 #                 "days
 
 
-# from app.db.base import get_connection,get_d365_connection
+# from app.db.base import get_connection,get_connection
 # from app.utils.date_utils import format_date
 # from app.utils.remainingdate import calculate_days_left
 

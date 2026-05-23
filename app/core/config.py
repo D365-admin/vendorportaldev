@@ -13,18 +13,6 @@ class Settings(BaseSettings):
     APP_NAME: str = "VendorPortal"
 
     # ── VendorPortal DB ──────────────────────────────────────
-    VSQL_DSN:str=""
-    SQL_DSN: str = ""
-    SQL_USERNAME: str = ""
-    SQL_PASSWORD: str = ""
-
-    # ── D365 SQL Server ──────────────────────────────────────
-    D365_DB_SERVER: str = ""
-    D365_DB_NAME: str = ""
-    D365_DB_USER: str = ""
-    D365_DB_PASSWORD: str = ""
-    D365_COMPANY: str = "HIQQ" 
-
     VENDOR_DB_SERVER: str = ""
     VENDOR_DB_NAME: str = ""
     VENDOR_DB_USER: str = ""

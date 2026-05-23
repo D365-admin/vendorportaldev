@@ -879,7 +879,7 @@ def fetch_completed_rfq_detail(
         }
     }
 
-# from app.db.base import get_connection, get_d365_connection
+# from app.db.base import get_connection, get_connection
 # from app.utils.date_utils import format_utc_iso
 # from typing import List, Dict, Any
 # from app.core.config import settings
@@ -900,7 +900,7 @@ def fetch_completed_rfq_detail(
 
 # def _get_approved_items(vendor_account: str) -> List[str]:
 #     try:
-#         with get_d365_connection() as conn:
+#         with get_connection() as conn:
 #             cur = conn.cursor()
 #             cur.execute("""
 #                 SELECT UPPER(LTRIM(RTRIM(ITEMID))) AS ITEMID
@@ -1017,7 +1017,7 @@ def fetch_completed_rfq_detail(
 
 #     result = []
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 #         cur.execute(d365_query, [vendor_account] + rfq_ids)
 
@@ -1113,7 +1113,7 @@ def fetch_completed_rfq_detail(
 #     item_placeholders = ",".join(["?"] * len(approved_items))
 
 #     # STEP 2 — D365 DB: header
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 
 #         cur.execute("""
@@ -1300,7 +1300,7 @@ def fetch_completed_rfq_detail(
 
 
 
-# # from app.db.base import get_connection, get_d365_connection
+# # from app.db.base import get_connection, get_connection
 # # from app.utils.date_utils import format_utc_iso,format_date
 # # from typing import List, Dict, Any
 
@@ -1320,7 +1320,7 @@ def fetch_completed_rfq_detail(
 # # def _get_approved_items(vendor_account: str) -> List[str]:
 # #     """
 # #     Fetch approved item IDs for a vendor from D365.
-# #     PDSAPPROVEDVENDORLIST lives in AxDb — must use get_d365_connection().
+# #     PDSAPPROVEDVENDORLIST lives in AxDb — must use get_connection().
 # #     """
 # #     try:
         

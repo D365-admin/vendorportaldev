@@ -163,7 +163,7 @@ def fetch_vendor_rfqs(vendor_account: str):
         return result
 
 
-# from app.db.base import get_connection, get_d365_connection
+# from app.db.base import get_connection, get_connection
 # from app.utils.date_utils import format_utc_iso
 # from app.utils.remainingdate import calculate_days_left
 # from app.core.config import settings
@@ -251,7 +251,7 @@ def fetch_vendor_rfqs(vendor_account: str):
 #     """
 
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 
 #         cursor = conn.cursor()
 #         cursor.execute(d365_query, vendor_account)

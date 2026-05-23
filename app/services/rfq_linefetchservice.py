@@ -614,7 +614,7 @@ def fetch_rfq_detail(
 
 # from app.db.base import (
 #     get_connection,
-#     get_d365_connection
+#     get_connection
 # )
 
 # from app.utils.date_utils import (
@@ -741,7 +741,7 @@ def fetch_rfq_detail(
 #     # ============================================================
 #     # STEP 1 → FETCH HEADER + LINES FROM D365 DB
 #     # ============================================================
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 
 #         cursor = conn.cursor()
 

@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 
-from app.db.base import get_connection, get_d365_connection
+from app.db.base import get_connection, get_connection
 from app.core.config import settings
 
 SCHEMA=settings.DB_SCHEMA
@@ -1033,7 +1033,7 @@ def get_all_expiring_rfqs_with_vendors():
 #       AND C.EXPIRYDATETIME >= GETDATE()
 #       AND C.EXPIRYDATETIME <  DATEADD(HOUR,24,GETDATE())
 #     """
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 #         cur.execute(q, settings.D365_COMPANY)
 #         rows = cur.fetchall()
@@ -1539,8 +1539,8 @@ def get_rfq_lines_with_rfqid(rfq_id: str, vendor_account: str):
 #     --AND C.EXPIRYDATETIME >= DATEADD(HOUR, 23, GETDATE())
 #     --AND C.EXPIRYDATETIME <  DATEADD(HOUR, 24, GETDATE())
 #     """
-#     from app.db.base import get_d365_connection
-#     with get_d365_connection() as conn:
+#     from app.db.base import get_connection
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 #         cur.execute(q, settings.D365_COMPANY)
 #         rows = cur.fetchall()

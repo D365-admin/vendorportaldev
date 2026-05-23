@@ -361,7 +361,7 @@ def fetch_inprogress_rfqs(
 
 # from app.db.base import (
 #     get_connection,
-#     get_d365_connection
+#     get_connection
 # )
 
 # from app.core.config import settings
@@ -548,7 +548,7 @@ def fetch_inprogress_rfqs(
 #     )
 
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 
 #         cursor = conn.cursor()
 

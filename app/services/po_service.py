@@ -338,7 +338,7 @@ def get_vendor_po_kpi(
                 row[5] or 0
         }
 
-# from app.db.base import get_connection,get_d365_connection
+# from app.db.base import get_connection,get_connection
 # from app.utils.date_utils import format_utc_iso,format_date
 
 
@@ -379,7 +379,7 @@ def get_vendor_po_kpi(
 
 # ORDER BY P.CREATEDDATETIME DESC
 #     """
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #     # with get_connection() as conn:
 #         cursor = conn.cursor()
 #         cursor.execute(query, vendor_account)
@@ -439,7 +439,7 @@ def get_vendor_po_kpi(
 
 #     return result
 # def get_vendor_po_kpi(vendor_account: str):
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #     # with get_connection() as conn:
 #         cur = conn.cursor()
 

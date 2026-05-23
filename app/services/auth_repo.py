@@ -871,7 +871,7 @@ def mark_token_used(
 # from datetime import datetime
 # from app.db.base import (
 #     get_connection,
-#     get_d365_connection
+#     get_connection
 # )
 # from app.core.config import settings
 # import hashlib
@@ -983,7 +983,7 @@ def mark_token_used(
 #     WHERE UPPER(VT.ACCOUNTNUM) = UPPER(?)
 #     """
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 
 #         cur = conn.cursor()
 
@@ -1012,7 +1012,7 @@ def mark_token_used(
 #     WHERE UPPER(VT.ACCOUNTNUM) = UPPER(?)
 #     """
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 #         cur.execute(q, vendor_account)
 #         row = cur.fetchone()
@@ -1400,7 +1400,7 @@ def mark_token_used(
 #         OR V.ACCOUNTNUM  = ?
 #     """
 
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 
 #         cur = conn.cursor()
 

@@ -124,7 +124,7 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
         }
     }
 
-# from app.db.base import get_connection,get_d365_connection
+# from app.db.base import get_connection,get_connection
 # from typing import Dict, Any
 
 
@@ -135,7 +135,7 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
 # # Returns plain lists of "CODE - Full Description" strings
 # # ============================================================
 # def fetch_rfq_dropdowns() -> Dict[str, Any]:
-#     with get_d365_connection() as conn:
+#     with get_connection() as conn:
 #         cur = conn.cursor()
 
 #         # ── Delivery Mode ───────────────────────────────────────

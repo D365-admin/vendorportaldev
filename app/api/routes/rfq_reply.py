@@ -17,7 +17,7 @@ from app.db.bids_repo import (
     send_expiry_reminder_emails,
 )
 from app.services.notification_service import notify_new_rfq
-from app.db.base import get_connection, get_d365_connection
+from app.db.base import get_connection, get_connection
 from app.core.config import settings
 SCHEMA=settings.DB_SCHEMA
 VENDOR_USER_TABLE = f"{SCHEMA}.HIQ_VENDORPORTALUSER"
@@ -289,7 +289,7 @@ def sync_new_rfq_notifications():
 #     print("[NOTIF] Syncing new RFQ notifications...")
 
 #     try:
-#         with get_d365_connection() as d365_conn:
+#         with get_connection() as d365_conn:
 #             cur = d365_conn.cursor()
 
 #             cur.execute(
@@ -539,7 +539,7 @@ def sync_rfq_decision_notifications():
 #         return
 
 #     try:
-#         with get_d365_connection() as d365_conn:
+#         with get_connection() as d365_conn:
 #             cur = d365_conn.cursor()
 
 #             for rfq_id, vendor_account in submitted:
