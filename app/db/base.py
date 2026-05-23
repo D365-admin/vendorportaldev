@@ -24,7 +24,7 @@ VENDOR_DB_CONNECTION = (
     f"DATABASE={settings.VENDOR_DB_NAME};"
     f"UID={settings.VENDOR_DB_USER};"
     f"PWD={settings.VENDOR_DB_PASSWORD};"
-    "TrustServerCertificate=no;"
+    "TrustServerCertificate=yes;"
     "Encrypt=yes;"
     "Connection Timeout=30;"
 )
@@ -39,19 +39,30 @@ VENDOR_DB_CONNECTION = (
 #     "Connection Timeout=60;"
 # )
 
-
 @contextmanager
 def get_connection():
-    """VENDORPORTAL DB — vendor_portal_user, sync_log, notification_log"""
     conn = None
     try:
         conn = pyodbc.connect(VENDOR_DB_CONNECTION, timeout=10)
         yield conn
     except Exception as e:
-        raise Exception(f"[VENDORPORTAL] Connection failed: {str(e)}")
+        print(f"[VENDORPORTAL] Connection failed: {e}")  
+        raise                                             
     finally:
         if conn:
             conn.close()
+# @contextmanager
+# def get_connection():
+#     """VENDORPORTAL DB — vendor_portal_user, sync_log, notification_log"""
+#     conn = None
+#     try:
+#         conn = pyodbc.connect(VENDOR_DB_CONNECTION, timeout=10)
+#         yield conn
+#     except Exception as e:
+#         raise Exception(f"[VENDORPORTAL] Connection failed: {str(e)}")
+#     finally:
+#         if conn:
+#             conn.close()
 
 
 # @contextmanager
