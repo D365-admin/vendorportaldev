@@ -24,7 +24,9 @@ VENDOR_DB_CONNECTION = (
     f"DATABASE={settings.VENDOR_DB_NAME};"
     f"UID={settings.VENDOR_DB_USER};"
     f"PWD={settings.VENDOR_DB_PASSWORD};"
-    "TrustServerCertificate=yes;"
+    "TrustServerCertificate=no;"
+    "Encrypt=yes;"
+    "Connection Timeout=30;"
 )
 # # ── D365 SQL Server (direct read + write bids) ────────────────
 # D365_CONNECTION_STRING = (
