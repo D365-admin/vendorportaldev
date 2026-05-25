@@ -89,7 +89,7 @@ def get_vendor_name(
     vendor_account: str
 ):
 
-    q = """
+    q = f"""
     SELECT TOP 1
 
         ISNULL(
@@ -97,7 +97,7 @@ def get_vendor_name(
             ACCOUNTNUM
         ) AS NAME
 
-    FROM D365_VENDORMASTER
+    FROM {SCHEMA}.D365_VENDORMASTER
     WITH (NOLOCK)
 
     WHERE UPPER(ACCOUNTNUM)
@@ -538,14 +538,14 @@ def get_vendor_from_master(
     identifier: str
 ):
 
-    q = """
+    q = f"""
     SELECT TOP 1
 
         ACCOUNTNUM,
         NAME,
         EMAIL
 
-    FROM D365_VENDORMASTER
+    FROM {SCHEMA}.D365_VENDORMASTER
     WITH (NOLOCK)
 
     WHERE LOWER(EMAIL)

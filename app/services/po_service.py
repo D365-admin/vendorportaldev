@@ -5,7 +5,8 @@ from app.db.base import (
 from app.utils.date_utils import (
     format_utc_iso
 )
-
+from app.core.config import settings
+SCHEMA = settings.DB_SCHEMA
 
 # ============================================================
 # FETCH PO LIST
@@ -32,7 +33,7 @@ def fetch_po_list(
 
             P.PURCHSTATUS
 
-        FROM D365_PURCHTABLE P
+        FROM {SCHEMA}.D365_PURCHTABLE P
         WITH (NOLOCK)
 
         -- ====================================================
@@ -47,7 +48,7 @@ def fetch_po_list(
                 SUM(LINEAMOUNT)
                     AS TOTAL_AMOUNT
 
-            FROM D365_PURCHLINE
+            FROM {SCHEMA}.D365_PURCHLINE
             WITH (NOLOCK)
 
             GROUP BY PURCHID
@@ -67,7 +68,7 @@ def fetch_po_list(
                 MAX(RFQID)
                     AS RFQID
 
-            FROM D365_PURCHRFQLINE
+            FROM {SCHEMA}.D365_PURCHRFQLINE
             WITH (NOLOCK)
 
             GROUP BY PURCHID

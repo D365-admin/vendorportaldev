@@ -5,7 +5,8 @@ from app.utils.date_utils import (
 from app.db.base import (
     get_connection
 )
-
+from app.core.config import settings
+SCHEMA = settings.DB_SCHEMA
 
 # ============================================================
 # PURCHASE STATUS MAP
@@ -32,7 +33,7 @@ def fetch_po_details(
     vendor_account: str
 ):
 
-    query = """
+    query = f"""
         SELECT
 
             P.PURCHID,
@@ -51,7 +52,7 @@ def fetch_po_details(
                 SELECT TOP 1
                     R.RFQID
 
-                FROM D365_PURCHRFQLINE R
+                FROM {SCHEMA}.D365_PURCHRFQLINE R
                 WITH (NOLOCK)
 
                 WHERE R.PURCHID = P.PURCHID
@@ -62,7 +63,7 @@ def fetch_po_details(
                 SELECT TOP 1
                     J.PURCHORDERDATE
 
-                FROM D365_VENDPURCHORDERJOUR J
+                FROM {SCHEMA}.D365_VENDPURCHORDERJOUR J
                 WITH (NOLOCK)
 
                 WHERE J.PURCHID = P.PURCHID
@@ -100,15 +101,15 @@ def fetch_po_details(
 
             L.CURRENCYCODE
 
-        FROM D365_PURCHTABLE P
+        FROM {SCHEMA}.D365_PURCHTABLE P
         WITH (NOLOCK)
 
-        LEFT JOIN D365_PURCHLINE L
+        LEFT JOIN {SCHEMA}.D365_PURCHLINE L
         WITH (NOLOCK)
             ON L.PURCHID = P.PURCHID
             AND L.ISDELETED = 0
 
-        LEFT JOIN D365_ECORESCATEGORY PC
+        LEFT JOIN {SCHEMA}.D365_ECORESCATEGORY PC
         WITH (NOLOCK)
             ON PC.RECID = L.PROCUREMENTCATEGORY
 

@@ -10,6 +10,11 @@ from app.utils.remainingdate import (
     calculate_days_left
 )
 
+import os
+
+DB_SCHEMA = os.getenv("DB_SCHEMA")
+
+
 # ============================================================
 # BID MATERIALS
 # ============================================================
@@ -17,7 +22,7 @@ def fetch_bid_materials(
     vendor_account: str
 ):
 
-    query = """
+    query = f"""
         SELECT
 
             P.ITEMID,
@@ -29,10 +34,10 @@ def fetch_bid_materials(
 
             P.VALIDTO
 
-        FROM D365_PDSAPPROVEDVENDORLIST P
+        FROM {DB_SCHEMA}.D365_PDSAPPROVEDVENDORLIST P
         WITH (NOLOCK)
 
-        LEFT JOIN D365_INVENTTABLE I
+        LEFT JOIN {DB_SCHEMA}.D365_INVENTTABLE I
         WITH (NOLOCK)
 
             ON I.ITEMID = P.ITEMID
@@ -94,6 +99,8 @@ def fetch_bid_materials(
                     )
             })
 
+        cursor.close()
+
         return result
 
 
@@ -117,7 +124,7 @@ def fetch_vendor_profile(
         "city": None
     }
 
-    query = """
+    query = f"""
         SELECT TOP 1
 
             NAME,
@@ -130,7 +137,7 @@ def fetch_vendor_profile(
 
             CITY
 
-        FROM D365_VENDORMASTER
+        FROM {DB_SCHEMA}.D365_VENDORMASTER
         WITH (NOLOCK)
 
         WHERE ACCOUNTNUM = ?

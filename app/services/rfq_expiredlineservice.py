@@ -33,7 +33,7 @@ def fetch_rfq_detail(
     # ========================================================
     # HEADER QUERY
     # ========================================================
-    header_query = """
+    header_query = f"""
         SELECT
 
             C.RFQCASEID,
@@ -68,31 +68,31 @@ def fetch_rfq_detail(
 
             T.HIQ_TERMSANDCONDITIONS
 
-        FROM D365_PURCHRFQCASETABLE C
+        FROM {SCHEMA}.D365_PURCHRFQCASETABLE C
         WITH (NOLOCK)
 
-        INNER JOIN D365_PURCHRFQTABLE T
+        INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
         WITH (NOLOCK)
 
             ON T.RFQCASEID = C.RFQCASEID
            AND T.VENDACCOUNT = ?
 
-        LEFT JOIN D365_PAYMTERM PT
+        LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
         WITH (NOLOCK)
 
             ON C.PAYMENT = PT.PAYMTERMID
 
-        LEFT JOIN D365_PAYMMODETABLE PM
+        LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
         WITH (NOLOCK)
 
             ON C.PAYMMODE = PM.PAYMMODE
 
-        LEFT JOIN D365_DLVMODE DM
+        LEFT JOIN {SCHEMA}.D365_DLVMODE DM
         WITH (NOLOCK)
 
             ON C.DLVMODE = DM.CODE
 
-        LEFT JOIN D365_DLVTERM DT
+        LEFT JOIN {SCHEMA}.D365_DLVTERM DT
         WITH (NOLOCK)
 
             ON C.DLVTERM = DT.CODE
@@ -104,7 +104,7 @@ def fetch_rfq_detail(
     # ========================================================
     # LINE QUERY
     # ========================================================
-    lines_query = """
+    lines_query = f"""
         SELECT
 
             RL.LINENUM,
@@ -135,20 +135,20 @@ def fetch_rfq_detail(
             RPL.DELIVERYDATE
                 AS VENDORREPLY_DELIVERY_DATE
 
-        FROM D365_PURCHRFQLINE RL
+        FROM {SCHEMA}.D365_PURCHRFQLINE RL
         WITH (NOLOCK)
 
-        LEFT JOIN D365_PURCHRFQREPLYLINE RPL
+        LEFT JOIN {SCHEMA}.D365_PURCHRFQREPLYLINE RPL
         WITH (NOLOCK)
 
             ON RPL.RFQLINERECID = RL.RECID
 
-        LEFT JOIN D365_INVENTTABLE IT
+        LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT
         WITH (NOLOCK)
 
             ON IT.ITEMID = RL.ITEMID
 
-        INNER JOIN D365_PDSAPPROVEDVENDORLIST AVL
+        INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
         WITH (NOLOCK)
 
             ON AVL.ITEMID = RL.ITEMID

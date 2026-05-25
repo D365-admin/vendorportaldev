@@ -963,7 +963,7 @@ def already_sent_reminder(vendor_account: str, rfq_case_id: str) -> bool:
 
 def get_all_expiring_rfqs_with_vendors():
 
-    q = """
+    q = f"""
     SELECT
 
         C.RFQCASEID,
@@ -976,15 +976,15 @@ def get_all_expiring_rfqs_with_vendors():
 
         V.VENDACCOUNT
 
-    FROM D365_PURCHRFQCASETABLE C
+    FROM {SCHEMA}.D365_PURCHRFQCASETABLE C
     WITH (NOLOCK)
 
-    INNER JOIN D365_PURCHRFQVENDLINK V
+    INNER JOIN {SCHEMA}.D365_PURCHRFQVENDLINK V
     WITH (NOLOCK)
 
         ON V.RFQCASEID = C.RFQCASEID
 
-    INNER JOIN D365_PURCHRFQTABLE T
+    INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
     WITH (NOLOCK)
 
         ON T.RFQCASEID = C.RFQCASEID

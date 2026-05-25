@@ -37,7 +37,7 @@ def fetch_vendor_rfqs(vendor_account: str):
     # ========================================================
     # STEP 2 → FETCH RFQS
     # ========================================================
-    d365_query = """
+    d365_query = f"""
         SELECT
 
             C.RFQCASEID,
@@ -53,22 +53,22 @@ def fetch_vendor_rfqs(vendor_account: str):
             DM.TXT AS DELIVERY_MODE,
             DT.TXT AS DELIVERY_TERM
 
-        FROM D365_PURCHRFQCASETABLE C WITH (NOLOCK)
+        FROM {SCHEMA}.D365_PURCHRFQCASETABLE C WITH (NOLOCK)
 
-        INNER JOIN D365_PURCHRFQTABLE T WITH (NOLOCK)
+        INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T WITH (NOLOCK)
             ON T.RFQCASEID = C.RFQCASEID
             AND T.VENDACCOUNT = ?
 
-        LEFT JOIN D365_PAYMTERM PT WITH (NOLOCK)
+        LEFT JOIN {SCHEMA}.D365_PAYMTERM PT WITH (NOLOCK)
             ON C.PAYMENT = PT.PAYMTERMID
 
-        LEFT JOIN D365_PAYMMODETABLE PM WITH (NOLOCK)
+        LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM WITH (NOLOCK)
             ON C.PAYMMODE = PM.PAYMMODE
 
-        LEFT JOIN D365_DLVMODE DM WITH (NOLOCK)
+        LEFT JOIN {SCHEMA}.D365_DLVMODE DM WITH (NOLOCK)
             ON C.DLVMODE = DM.CODE
 
-        LEFT JOIN D365_DLVTERM DT WITH (NOLOCK)
+        LEFT JOIN {SCHEMA}.D365_DLVTERM DT WITH (NOLOCK)
             ON C.DLVTERM = DT.CODE
 
         WHERE
@@ -85,9 +85,9 @@ def fetch_vendor_rfqs(vendor_account: str):
 
                 SELECT 1
 
-                FROM D365_PURCHRFQCASELINE CL WITH (NOLOCK)
+                FROM {SCHEMA}.D365_PURCHRFQCASELINE CL WITH (NOLOCK)
 
-                INNER JOIN D365_PDSAPPROVEDVENDORLIST AVL WITH (NOLOCK)
+                INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL WITH (NOLOCK)
                     ON AVL.ITEMID = CL.ITEMID
                     AND AVL.PDSAPPROVEDVENDOR = T.VENDACCOUNT
                     AND AVL.VALIDFROM <= GETUTCDATE()

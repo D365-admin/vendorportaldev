@@ -53,7 +53,7 @@ def _get_approved_items(
 
                     ITEMID
 
-                FROM D365_PDSAPPROVEDVENDORLIST
+                FROM {SCHEMA}.D365_PDSAPPROVEDVENDORLIST
                 WITH (NOLOCK)
 
                 WHERE PDSAPPROVEDVENDOR = ?
@@ -95,17 +95,17 @@ def fetch_dashboard_metrics(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 T.RFQID,
 
                 L.EXPIRYDATETIME
 
-            FROM D365_PURCHRFQCASETABLE L
+            FROM {SCHEMA}.D365_PURCHRFQCASETABLE L
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQTABLE T
+            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
             WITH (NOLOCK)
 
                 ON T.RFQCASEID = L.RFQCASEID
@@ -133,10 +133,10 @@ def fetch_dashboard_metrics(
 
                     SELECT 1
 
-                    FROM D365_PURCHRFQCASELINE CL
+                    FROM {SCHEMA}.D365_PURCHRFQCASELINE CL
                     WITH (NOLOCK)
 
-                    INNER JOIN D365_PDSAPPROVEDVENDORLIST AVL
+                    INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
                     WITH (NOLOCK)
 
                         ON AVL.ITEMID = CL.ITEMID
@@ -189,12 +189,12 @@ def fetch_dashboard_metrics(
         # ====================================================
         # PO COUNT
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 COUNT(DISTINCT PURCHID)
 
-            FROM D365_PURCHTABLE
+            FROM {SCHEMA}.D365_PURCHTABLE
             WITH (NOLOCK)
 
             WHERE ORDERACCOUNT = ?
@@ -355,7 +355,7 @@ def fetch_dashboard_metrics(
 
                     COUNT(DISTINCT RFQID)
 
-                FROM D365_PURCHRFQLINE
+                FROM {SCHEMA}.D365_PURCHRFQLINE
                 WITH (NOLOCK)
 
                 WHERE STATUS = 4
@@ -515,7 +515,7 @@ def fetch_rfq_summary(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 L.RFQCASEID,
@@ -524,10 +524,10 @@ def fetch_rfq_summary(
 
                 L.EXPIRYDATETIME
 
-            FROM D365_PURCHRFQCASETABLE L
+            FROM {SCHEMA}.D365_PURCHRFQCASETABLE L
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQTABLE T
+            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
             WITH (NOLOCK)
 
                 ON T.RFQCASEID = L.RFQCASEID
@@ -537,10 +537,10 @@ def fetch_rfq_summary(
 
                 SELECT 1
 
-                FROM D365_PURCHRFQCASELINE CL
+                FROM {SCHEMA}.D365_PURCHRFQCASELINE CL
                 WITH (NOLOCK)
 
-                INNER JOIN D365_PDSAPPROVEDVENDORLIST AVL
+                INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
                 WITH (NOLOCK)
 
                     ON AVL.ITEMID = CL.ITEMID
@@ -768,7 +768,7 @@ def fetch_rfq_counts(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 L.RFQCASEID,
@@ -777,10 +777,10 @@ def fetch_rfq_counts(
 
                 L.EXPIRYDATETIME
 
-            FROM D365_PURCHRFQCASETABLE L
+            FROM {SCHEMA}.D365_PURCHRFQCASETABLE L
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQTABLE T
+            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
             WITH (NOLOCK)
 
                 ON T.RFQCASEID = L.RFQCASEID
@@ -790,10 +790,10 @@ def fetch_rfq_counts(
 
                 SELECT 1
 
-                FROM D365_PURCHRFQCASELINE CL
+                FROM {SCHEMA}.D365_PURCHRFQCASELINE CL
                 WITH (NOLOCK)
 
-                INNER JOIN D365_PDSAPPROVEDVENDORLIST AVL
+                INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
                 WITH (NOLOCK)
 
                     ON AVL.ITEMID = CL.ITEMID

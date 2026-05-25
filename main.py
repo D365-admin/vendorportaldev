@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.core.config import settings
 from app.api.routes.rfq_newrouter import router as rfq_router
 from app.api.routes.vendormat_router import router as my_profile
 from app.api.routes.auth_router import router as auth_router
@@ -72,13 +72,13 @@ app.include_router(notification_router)
  
 import urllib3
 from fastapi import FastAPI
-from app.api.routes.rfq_reply import router as rfq_router
+from app.api.routes.rfq_reply import router as rfq_replyrouter
 from app.api.routes.rfq_reply import start_scheduler, stop_scheduler
  
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
  
  
-app.include_router(rfq_router)
+app.include_router(rfq_replyrouter)
  
  
 @app.on_event("startup")
@@ -94,4 +94,13 @@ def on_shutdown():
 @app.get("/health")
 def health():
     return {"status": "Running"}
- 
+
+@app.get("/debug-db")
+def debug_db():
+    import pyodbc
+    return {
+        "server": settings.VENDOR_DB_SERVER,
+        "database": settings.VENDOR_DB_NAME,
+        "user": settings.VENDOR_DB_USER,
+        "drivers": pyodbc.drivers()   # shows what ODBC drivers are installed
+    }

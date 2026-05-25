@@ -6,7 +6,8 @@ from typing import (
     Dict,
     Any
 )
-
+from app.core.config import settings
+SCHEMA = settings.DB_SCHEMA
 
 # ============================================================
 # RFQ DROPDOWNS
@@ -20,13 +21,13 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
         # ====================================================
         # DELIVERY MODE
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 CODE + ' - ' +
                 ISNULL(TXT, CODE)
 
-            FROM D365_DLVMODE
+            FROM {SCHEMA}.D365_DLVMODE
             WITH (NOLOCK)
 
             ORDER BY TXT
@@ -42,13 +43,13 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
         # ====================================================
         # DELIVERY TERM
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 CODE + ' - ' +
                 ISNULL(TXT, CODE)
 
-            FROM D365_DLVTERM
+            FROM {SCHEMA}.D365_DLVTERM
             WITH (NOLOCK)
 
             ORDER BY TXT
@@ -64,12 +65,12 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
         # ====================================================
         # PAYMENT TERM
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 PAYMTERMID
 
-            FROM D365_PAYMTERM
+            FROM {SCHEMA}.D365_PAYMTERM
             WITH (NOLOCK)
 
             ORDER BY DESCRIPTION
@@ -85,13 +86,13 @@ def fetch_rfq_dropdowns() -> Dict[str, Any]:
         # ====================================================
         # PAYMENT MODE
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 PAYMMODE + ' - ' +
                 ISNULL(NAME, PAYMMODE)
 
-            FROM D365_PAYMMODETABLE
+            FROM {SCHEMA}.D365_PAYMMODETABLE
             WITH (NOLOCK)
 
             ORDER BY NAME

@@ -166,7 +166,7 @@ def sync_new_rfq_notifications():
 
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
 
                     T.VENDACCOUNT,
@@ -177,10 +177,10 @@ def sync_new_rfq_notifications():
 
                     C.NAME
 
-                FROM D365_PURCHRFQCASETABLE C
+                FROM {SCHEMA}.D365_PURCHRFQCASETABLE C
                 WITH (NOLOCK)
 
-                INNER JOIN D365_PURCHRFQTABLE T
+                INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
                 WITH (NOLOCK)
 
                     ON T.RFQCASEID
@@ -432,15 +432,15 @@ def sync_rfq_decision_notifications():
                     # ============================================
                     # FETCH LINE STATUS
                     # ============================================
-                    cur.execute("""
+                    cur.execute(f"""
                         SELECT
 
                             PL.STATUS
 
-                        FROM D365_PURCHRFQREPLYLINE RL
+                        FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
                         WITH (NOLOCK)
 
-                        INNER JOIN D365_PURCHRFQLINE PL
+                        INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
                         WITH (NOLOCK)
 
                             ON PL.RECID

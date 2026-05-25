@@ -43,11 +43,11 @@ def _get_approved_items(
 
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
                     ITEMID
 
-                FROM D365_PDSAPPROVEDVENDORLIST
+                FROM {SCHEMA}.D365_PDSAPPROVEDVENDORLIST
                 WITH (NOLOCK)
 
                 WHERE PDSAPPROVEDVENDOR = ?
@@ -176,7 +176,7 @@ def fetch_completed_rfqs(
                 SELECT TOP 1
                     CURRENCYCODE
 
-                FROM D365_PURCHRFQREPLYTABLE
+                FROM {SCHEMA}.D365_PURCHRFQREPLYTABLE
                 WITH (NOLOCK)
 
                 WHERE RFQID = T.RFQID
@@ -193,26 +193,26 @@ def fetch_completed_rfqs(
             DT.TXT
                 AS DELIVERY_TERM
 
-        FROM D365_PURCHRFQTABLE T
+        FROM {SCHEMA}.D365_PURCHRFQTABLE T
         WITH (NOLOCK)
 
-        LEFT JOIN D365_PURCHRFQCASETABLE C
+        LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE C
         WITH (NOLOCK)
             ON C.RFQCASEID = T.RFQCASEID
 
-        LEFT JOIN D365_PAYMMODETABLE PM
+        LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
         WITH (NOLOCK)
             ON C.PAYMMODE = PM.PAYMMODE
 
-        LEFT JOIN D365_PAYMTERM PT
+        LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
         WITH (NOLOCK)
             ON C.PAYMENT = PT.PAYMTERMID
 
-        LEFT JOIN D365_DLVMODE DM
+        LEFT JOIN {SCHEMA}.D365_DLVMODE DM
         WITH (NOLOCK)
             ON C.DLVMODE = DM.CODE
 
-        LEFT JOIN D365_DLVTERM DT
+        LEFT JOIN {SCHEMA}.D365_DLVTERM DT
         WITH (NOLOCK)
             ON C.DLVTERM = DT.CODE
 
@@ -223,10 +223,10 @@ def fetch_completed_rfqs(
 
               SELECT 1
 
-              FROM D365_PURCHRFQREPLYLINE RL2
+              FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL2
               WITH (NOLOCK)
 
-              INNER JOIN D365_PURCHRFQLINE PL
+              INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
               WITH (NOLOCK)
                   ON PL.RECID = RL2.RFQLINERECID
 
@@ -277,7 +277,7 @@ def fetch_completed_rfqs(
             # =================================================
             # QUOTED AMOUNT
             # =================================================
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
 
                     ISNULL(
@@ -285,10 +285,10 @@ def fetch_completed_rfqs(
                         0
                     )
 
-                FROM D365_PURCHRFQREPLYLINE RL
+                FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
                 WITH (NOLOCK)
 
-                INNER JOIN D365_PURCHRFQLINE PL
+                INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
                 WITH (NOLOCK)
                     ON PL.RECID = RL.RFQLINERECID
 
@@ -410,7 +410,7 @@ def fetch_completed_rfq_detail(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT TOP 1
 
                 RT.RFQID,
@@ -477,31 +477,31 @@ def fetch_completed_rfq_detail(
 
                 T.HIQ_TERMSANDCONDITIONS
 
-            FROM D365_PURCHRFQREPLYTABLE RT
+            FROM {SCHEMA}.D365_PURCHRFQREPLYTABLE RT
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQTABLE T
+            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
             WITH (NOLOCK)
                 ON T.RFQID = RT.RFQID
                AND T.VENDACCOUNT = ?
 
-            LEFT JOIN D365_PURCHRFQCASETABLE C
+            LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE C
             WITH (NOLOCK)
                 ON C.RFQCASEID = T.RFQCASEID
 
-            LEFT JOIN D365_PAYMMODETABLE PM
+            LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
             WITH (NOLOCK)
                 ON C.PAYMMODE = PM.PAYMMODE
 
-            LEFT JOIN D365_PAYMTERM PT
+            LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
             WITH (NOLOCK)
                 ON C.PAYMENT = PT.PAYMTERMID
 
-            LEFT JOIN D365_DLVMODE DM
+            LEFT JOIN {SCHEMA}.D365_DLVMODE DM
             WITH (NOLOCK)
                 ON C.DLVMODE = DM.CODE
 
-            LEFT JOIN D365_DLVTERM DT
+            LEFT JOIN {SCHEMA}.D365_DLVTERM DT
             WITH (NOLOCK)
                 ON C.DLVTERM = DT.CODE
 
@@ -527,7 +527,7 @@ def fetch_completed_rfq_detail(
         # ====================================================
         # LINES
         # ====================================================
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 RL.LINENUM,
@@ -605,10 +605,10 @@ def fetch_completed_rfq_detail(
 
                 END AS HIQ_DECISION
 
-            FROM D365_PURCHRFQREPLYLINE RL
+            FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQLINE PL
+            INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
             WITH (NOLOCK)
                 ON PL.RECID = RL.RFQLINERECID
 

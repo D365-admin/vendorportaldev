@@ -40,12 +40,12 @@ def _get_approved_items(
 
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
 
                     ITEMID
 
-                FROM D365_PDSAPPROVEDVENDORLIST
+                FROM {SCHEMA}.D365_PDSAPPROVEDVENDORLIST
                 WITH (NOLOCK)
 
                 WHERE PDSAPPROVEDVENDOR = ?
@@ -278,30 +278,30 @@ def fetch_submitted_rfqs(
             DT.TXT
                 AS DELIVERY_TERM
 
-        FROM D365_PURCHRFQTABLE T
+        FROM {SCHEMA}.D365_PURCHRFQTABLE T
         WITH (NOLOCK)
 
-        LEFT JOIN D365_PURCHRFQCASETABLE L
+        LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE L
         WITH (NOLOCK)
 
             ON L.RFQCASEID = T.RFQCASEID
 
-        LEFT JOIN D365_PAYMMODETABLE PM
+        LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
         WITH (NOLOCK)
 
             ON L.PAYMMODE = PM.PAYMMODE
 
-        LEFT JOIN D365_PAYMTERM PT
+        LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
         WITH (NOLOCK)
 
             ON L.PAYMENT = PT.PAYMTERMID
 
-        LEFT JOIN D365_DLVMODE DM
+        LEFT JOIN {SCHEMA}.D365_DLVMODE DM
         WITH (NOLOCK)
 
             ON L.DLVMODE = DM.CODE
 
-        LEFT JOIN D365_DLVTERM DT
+        LEFT JOIN {SCHEMA}.D365_DLVTERM DT
         WITH (NOLOCK)
 
             ON L.DLVTERM = DT.CODE
@@ -467,7 +467,7 @@ def fetch_submitted_rfqs(
 
             try:
 
-                cur.execute("""
+                cur.execute(f"""
                     SELECT
 
                         ISNULL(
@@ -475,10 +475,10 @@ def fetch_submitted_rfqs(
                             0
                         )
 
-                    FROM D365_PURCHRFQLINE PL
+                    FROM {SCHEMA}.D365_PURCHRFQLINE PL
                     WITH (NOLOCK)
 
-                    INNER JOIN D365_PURCHRFQREPLYLINE RL
+                    INNER JOIN {SCHEMA}.D365_PURCHRFQREPLYLINE RL
                     WITH (NOLOCK)
 
                         ON RL.RFQLINERECID = PL.RECID
@@ -567,7 +567,7 @@ def fetch_submitted_rfq_detail(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT TOP 1
 
                 RT.RFQID,
@@ -634,36 +634,36 @@ def fetch_submitted_rfq_detail(
 
                 T.HIQ_TERMSANDCONDITIONS
 
-            FROM D365_PURCHRFQREPLYTABLE RT
+            FROM {SCHEMA}.D365_PURCHRFQREPLYTABLE RT
             WITH (NOLOCK)
 
-            INNER JOIN D365_PURCHRFQTABLE T
+            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
             WITH (NOLOCK)
 
                 ON T.RFQID = RT.RFQID
                AND T.VENDACCOUNT = ?
 
-            LEFT JOIN D365_PURCHRFQCASETABLE L
+            LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE L
             WITH (NOLOCK)
 
                 ON L.RFQCASEID = T.RFQCASEID
 
-            LEFT JOIN D365_PAYMMODETABLE PM
+            LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
             WITH (NOLOCK)
 
                 ON L.PAYMMODE = PM.PAYMMODE
 
-            LEFT JOIN D365_PAYMTERM PT
+            LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
             WITH (NOLOCK)
 
                 ON L.PAYMENT = PT.PAYMTERMID
 
-            LEFT JOIN D365_DLVMODE DM
+            LEFT JOIN {SCHEMA}.D365_DLVMODE DM
             WITH (NOLOCK)
 
                 ON L.DLVMODE = DM.CODE
 
-            LEFT JOIN D365_DLVTERM DT
+            LEFT JOIN {SCHEMA}.D365_DLVTERM DT
             WITH (NOLOCK)
 
                 ON L.DLVTERM = DT.CODE
@@ -749,16 +749,16 @@ def fetch_submitted_rfq_detail(
                     PL.DELIVERYDATE
                         AS RFQ_DELIVERY_DATE
 
-                FROM D365_PURCHRFQLINE PL
+                FROM {SCHEMA}.D365_PURCHRFQLINE PL
                 WITH (NOLOCK)
 
-                LEFT JOIN D365_PURCHRFQREPLYLINE RL
+                LEFT {SCHEMA}.JOIN D365_PURCHRFQREPLYLINE RL
                 WITH (NOLOCK)
 
                     ON RL.RFQLINERECID = PL.RECID
                    AND RL.RFQID = PL.RFQID
 
-                LEFT JOIN D365_INVENTTABLE IT
+                LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT
                 WITH (NOLOCK)
 
                     ON IT.ITEMID = PL.ITEMID
