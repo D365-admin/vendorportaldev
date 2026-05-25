@@ -29,11 +29,11 @@ class Settings(BaseSettings):
     HTTP_TIMEOUT_SECONDS: int = 60
 
     # ── Email ───────────────────────────────────────────────
-    MAIL_SERVER: str = "smtp.gmail.com"
+    MAIL_SERVER: str = "smtp.office365.com"
     MAIL_PORT: int = 587
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
-    MAIL_FROM: str = "noreply@vendorportal.com"
+    MAIL_FROM: str = ""
 
     # ── Frontend ────────────────────────────────────────────
     FRONTEND_BASE_URL: str = "http://localhost:3000"
