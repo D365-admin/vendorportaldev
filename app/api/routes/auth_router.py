@@ -117,7 +117,7 @@ def verify_otp(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,   # TRUE in HTTPS production
+        secure=True,   # TRUE in HTTPS production
         samesite="Lax",
         path="/",
         max_age=7 * 24 * 60 * 60,

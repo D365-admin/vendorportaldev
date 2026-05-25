@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     BID_EXPIRY_CHECK_INTERVAL_MINUTES: int = 60
 
     # ── CORS ────────────────────────────────────────────────
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = ""
 
     # ── Properties ──────────────────────────────────────────
     @property
