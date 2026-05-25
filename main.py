@@ -26,6 +26,7 @@ app = FastAPI(
 origins = [
     "https://hiqvendorportal.azurewebsites.net", 
     "http://localhost:3000",
+    "https://hiqvpbackend.azurewebsites.net"
     
 ]
 # origins = [
