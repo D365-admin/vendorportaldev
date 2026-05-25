@@ -24,8 +24,8 @@ app = FastAPI(
 
 # ✅ Allowed Origins
 origins = [
-    "http://localhost:3000",
     "https://hiqvendorportal.azurewebsites.net", 
+    "http://localhost:3000",
     
 ]
 # origins = [
@@ -46,8 +46,8 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    # allow_origins=origins,
-    allow_origins=["*"],
+    allow_origins=origins,
+    # allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
