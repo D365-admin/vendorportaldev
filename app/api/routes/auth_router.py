@@ -118,7 +118,7 @@ def verify_otp(
         value=refresh_token,
         httponly=True,
         secure=True,   # TRUE in HTTPS production
-        samesite="Lax",
+        samesite="None",
         path="/",
         max_age=7 * 24 * 60 * 60,
         expires=datetime.now(timezone.utc) + timedelta(days=7)
