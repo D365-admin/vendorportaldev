@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class Settings(BaseSettings):
 
     # ── App ──────────────────────────────────────────────────
-    APP_ENV: str = "local"
+    APP_ENV: str = "production"
     DEBUG: bool = True
     APP_NAME: str = "VendorPortal"
 
