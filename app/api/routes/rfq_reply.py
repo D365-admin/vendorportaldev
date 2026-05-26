@@ -616,7 +616,7 @@ def _scheduler_loop():
     while not _stop_event.is_set():
         try:
             now = datetime.now()
-            # if now.hour == 12 and now.minute == 45:
+            # if now.hour == 18 and now.minute == 10:
             if now.hour == 0 and 5 <= now.minute <= 9:
                 if last_run_date != now.date():
                     last_run_date = now.date()

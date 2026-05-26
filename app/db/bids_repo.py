@@ -591,8 +591,8 @@ def insert_bid_header(
                     0,
                     0,
 
-                    1,
-                    GETUTCDATE(),
+                    0,
+                    NULL,
 
                     GETUTCDATE(),
                     'SCHEDULER'
@@ -974,21 +974,16 @@ def get_all_expiring_rfqs_with_vendors():
 
         C.EXPIRYDATETIME,
 
-        V.VENDACCOUNT
+        T.VENDACCOUNT
 
     FROM {SCHEMA}.D365_PURCHRFQCASETABLE C
     WITH (NOLOCK)
 
-    INNER JOIN {SCHEMA}.D365_PURCHRFQVENDLINK V
-    WITH (NOLOCK)
-
-        ON V.RFQCASEID = C.RFQCASEID
 
     INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
     WITH (NOLOCK)
 
         ON T.RFQCASEID = C.RFQCASEID
-       AND T.VENDACCOUNT = V.VENDACCOUNT
 
     WHERE CAST(C.EXPIRYDATETIME AS DATE)
             =
