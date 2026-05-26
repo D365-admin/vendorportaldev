@@ -15,7 +15,7 @@ def fetch_po_list(
     vendor_account: str
 ):
 
-    query = """
+    query = f"""
         SELECT
 
             P.PURCHID,
@@ -212,7 +212,7 @@ def get_vendor_po_kpi(
 
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(f"""
             SELECT
 
                 COUNT(*)
@@ -307,7 +307,7 @@ def get_vendor_po_kpi(
 
                 ) AS cancelled_pos
 
-            FROM D365_PURCHTABLE
+            FROM {SCHEMA}.D365_PURCHTABLE
             WITH (NOLOCK)
 
             WHERE ORDERACCOUNT = ?
