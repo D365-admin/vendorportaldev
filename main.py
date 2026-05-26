@@ -26,7 +26,7 @@ app = FastAPI(
 origins = [
     "https://hiqvendorportal.azurewebsites.net", 
     "http://localhost:3000",
-    "https://hiqvpbackend.azurewebsites.net"
+    # "https://hiqvpbackend.azurewebsites.net"
     
 ]
 # origins = [
@@ -96,12 +96,3 @@ def on_shutdown():
 def health():
     return {"status": "Running"}
 
-@app.get("/debug-db")
-def debug_db():
-    import pyodbc
-    return {
-        "server": settings.VENDOR_DB_SERVER,
-        "database": settings.VENDOR_DB_NAME,
-        "user": settings.VENDOR_DB_USER,
-        "drivers": pyodbc.drivers()   # shows what ODBC drivers are installed
-    }
