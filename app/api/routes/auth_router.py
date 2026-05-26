@@ -118,7 +118,7 @@ def verify_otp(
         value=refresh_token,
         httponly=True,
         secure=True,   # TRUE in HTTPS production
-        samesite="None",
+        samesite="none",
         path="/",
         max_age=7 * 24 * 60 * 60,
         expires=datetime.now(timezone.utc) + timedelta(days=7)
@@ -211,8 +211,8 @@ def set_password(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,   # TRUE in HTTPS production
-        samesite="Lax",
+        secure=True,   # TRUE in HTTPS production
+        samesite="none",
         path="/",
         max_age=7 * 24 * 60 * 60,
         expires=datetime.now(timezone.utc) + timedelta(days=7)
