@@ -15,7 +15,7 @@ from app.services.rfq_submissionservice import (
 from app.services.rfq_inprogressservice import (
     fetch_inprogress_rfqs
 )
-
+from app.services.rfq_completedservice import (fetch_completed_rfqs)
 from datetime import (
     datetime,
     timedelta
@@ -872,15 +872,23 @@ def fetch_rfq_counts(
             vendor_account
         )
     )
-
-    completed_count = (
-        len(submitted_rfq_ids)
-        - submitted_count
+    completed_count = len(
+    fetch_completed_rfqs(
+        vendor_account
     )
+)
 
-    if completed_count < 0:
 
-        completed_count = 0
+    
+
+    # completed_count = (
+    #     len(submitted_rfq_ids)
+    #     - submitted_count
+    # )
+
+    # if completed_count < 0:
+
+    #     completed_count = 0
 
 
     total_rfq_count = len(rows)
