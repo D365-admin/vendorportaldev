@@ -205,11 +205,11 @@ def fetch_rfq_detail(
 
         if vendor_date:
             try:
-                formatted_vendor_date = (
-                    datetime
-                    .strptime(vendor_date.strip(), "%d/%m/%Y")
-                    .strftime("%Y-%m-%dT00:00:00Z")
-                )
+                formatted_vendor_date = format_utc_iso(
+    saved.get(
+        "vendor_delivery_date"
+    )
+)
             except Exception:
                 formatted_vendor_date = None
 
@@ -258,7 +258,7 @@ def fetch_rfq_detail(
             "saved_delivery_terms":         saved_header.get("DeliveryTerms",        ""),
             "saved_method_of_payment":      saved_header.get("methodOfPayment",      ""),
             "saved_terms_of_payment":       saved_header.get("termsOfPayment",       ""),
-            "saved_reply_delivery_date":    saved_header.get("replyDeliveryDate",    ""),
+            "saved_reply_delivery_date":   formatted_vendor_date,
             "saved_reply_delivery_terms":   saved_header.get("replyDeliveryTerms",   ""),
             "saved_reply_mode_of_delivery": saved_header.get("replyModeOfDelivery",  ""),
             "saved_vendor_comments":        saved_header.get("vendorComments",       ""),
