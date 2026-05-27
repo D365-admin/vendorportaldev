@@ -185,85 +185,311 @@ def fetch_rfq_detail(
     # ========================================================
     # BUILD ITEMS
     # ========================================================
-    items = []
+        items = []
 
-    for item in lines:
+        for item in lines:
 
-        line_number = int(item["LINENUM"])
-        saved       = saved_price_map.get(line_number, {})
-        unit_price  = saved.get("unit_price", 0)
+            line_number = int(item["LINENUM"])
 
-        # ── LINE STATUS ──────────────────────────────────────
-        if "lineStatus" in saved:
-            line_status = saved.get("lineStatus")
-        else:
-            line_status = unit_price > 0
+            saved = saved_price_map.get(
+                line_number,
+                {}
+            )
 
-        # ── VENDOR DELIVERY DATE ─────────────────────────────
-        vendor_date           = saved.get("vendor_delivery_date")
-        formatted_vendor_date = None
+            unit_price = saved.get(
+                "unit_price",
+                0
+            )
 
-        if vendor_date:
-            try:
-                formatted_vendor_date = format_utc_iso(
-    saved.get(
-        "vendor_delivery_date"
-    )
-)
-            except Exception:
-                formatted_vendor_date = None
+            # ── LINE STATUS ──────────────────────────────────────
+            if "lineStatus" in saved:
 
-        items.append({
-            "sl_no":                line_number,
-            "material_description": item["MATERIAL_DESCRIPTION"],
-            "material_code":        item["MATERIAL_CODE"],
-            "quantity":             item["QUANTITY"],
-            "uom":                  item["UOM"],
-            "target_price":         round(float(item["TARGETPRICE"] or 0), 2),
-            "comments":             item["COMMENTS"],
-            "unit_price":           unit_price,
-            "remarks":              saved.get("vendor_comments", ""),
-            "lineStatus":           line_status,
-            "currency":             item.get("CURRENCYCODE"),
-            "rfq_delivery_date":    format_utc_iso(item.get("LINE_DELIVERY_DATE")),
-            "vendor_delivery_date": formatted_vendor_date,   # ← now populated correctly
-        })
+                line_status = saved.get(
+                    "lineStatus"
+                )
 
-    # ========================================================
-    # FINAL RESPONSE
-    # ========================================================
-    return {
+            else:
 
-        "success": True,
+                line_status = unit_price > 0
 
-        # has_draft = True only when actual unsaved draft (status=0)
-        "has_draft": bool(saved_price_map) and draft_submissionstatus == 0,
+            # ====================================================
+            # LINE DELIVERY DATE
+            # take ONLY line payload deliveryDate
+            # ====================================================
+            formatted_vendor_date = format_utc_iso(
+                saved.get(
+                    "vendor_delivery_date"
+                )
+            )
 
-        "data": {
-            "rfq_case_id":              header["RFQCASEID"],
-            "rfq_id":                   header["RFQID"],
-            "document_title":           header["DOCUMENT_TITLE"],
-            "issue_date":               format_utc_iso(header["ISSUE_DATE"]),
-            "closing_date":             format_utc_iso(header["CLOSING_DATE"]),
-            "time_remaining":           calculate_days_left(header["CLOSING_DATE"]),
-            "expected_delivery_date":   format_utc_iso(header["EXPECTED_DELIVERY_DATE"]),
-            "payment_term":             header["PAYMENT_TERM"]       or "-",
-            "method_of_payment":        header["METHOD_OF_PAYMENT"]  or "-",
-            "delivery_term":            header["DELIVERY_TERM"]      or "-",
-            "mode_of_delivery":         header["MODE_OF_DELIVERY"]   or "-",
-            "termsandconditions":       header["HIQ_TERMSANDCONDITIONS"],
+            items.append({
 
-            # ── SAVED VALUES FROM DRAFT/CONFIRMED ────────────
-            "saved_mode_of_delivery":       saved_header.get("modeOfDelivery",      ""),
-            "saved_delivery_terms":         saved_header.get("DeliveryTerms",        ""),
-            "saved_method_of_payment":      saved_header.get("methodOfPayment",      ""),
-            "saved_terms_of_payment":       saved_header.get("termsOfPayment",       ""),
-            "saved_reply_delivery_date":   formatted_vendor_date,
-            "saved_reply_delivery_terms":   saved_header.get("replyDeliveryTerms",   ""),
-            "saved_reply_mode_of_delivery": saved_header.get("replyModeOfDelivery",  ""),
-            "saved_vendor_comments":        saved_header.get("vendorComments",       ""),
+                "sl_no":
+                    line_number,
 
-            "items": items,
+                "material_description":
+                    item["MATERIAL_DESCRIPTION"],
+
+                "material_code":
+                    item["MATERIAL_CODE"],
+
+                "quantity":
+                    item["QUANTITY"],
+
+                "uom":
+                    item["UOM"],
+
+                "target_price":
+                    round(
+                        float(
+                            item["TARGETPRICE"] or 0
+                        ),
+                        2
+                    ),
+
+                "comments":
+                    item["COMMENTS"],
+
+                "unit_price":
+                    unit_price,
+
+                "remarks":
+                    saved.get(
+                        "vendor_comments",
+                        ""
+                    ),
+
+                "lineStatus":
+                    line_status,
+
+                "currency":
+                    item.get(
+                        "CURRENCYCODE"
+                    ),
+
+                "rfq_delivery_date":
+                    format_utc_iso(
+                        item.get(
+                            "LINE_DELIVERY_DATE"
+                        )
+                    ),
+
+                # line-level payload date
+                "vendor_delivery_date":
+                    formatted_vendor_date
+            })
+
+
+        # ========================================================
+        # HEADER DELIVERY DATE
+        # take ONLY payload.replyDeliveryDate
+        # ========================================================
+        formatted_reply_delivery_date = format_utc_iso(
+            saved_header.get(
+                "replyDeliveryDate"
+            )
+        )
+
+
+        # ========================================================
+        # FINAL RESPONSE
+        # ========================================================
+        return {
+
+            "success": True,
+
+            "has_draft":
+                bool(saved_price_map)
+                and draft_submissionstatus == 0,
+
+            "data": {
+
+                "rfq_case_id":
+                    header["RFQCASEID"],
+
+                "rfq_id":
+                    header["RFQID"],
+
+                "document_title":
+                    header["DOCUMENT_TITLE"],
+
+                "issue_date":
+                    format_utc_iso(
+                        header["ISSUE_DATE"]
+                    ),
+
+                "closing_date":
+                    format_utc_iso(
+                        header["CLOSING_DATE"]
+                    ),
+
+                "time_remaining":
+                    calculate_days_left(
+                        header["CLOSING_DATE"]
+                    ),
+
+                "expected_delivery_date":
+                    format_utc_iso(
+                        header[
+                            "EXPECTED_DELIVERY_DATE"
+                        ]
+                    ),
+
+                "payment_term":
+                    header["PAYMENT_TERM"] or "-",
+
+                "method_of_payment":
+                    header[
+                        "METHOD_OF_PAYMENT"
+                    ] or "-",
+
+                "delivery_term":
+                    header[
+                        "DELIVERY_TERM"
+                    ] or "-",
+
+                "mode_of_delivery":
+                    header[
+                        "MODE_OF_DELIVERY"
+                    ] or "-",
+
+                "termsandconditions":
+                    header[
+                        "HIQ_TERMSANDCONDITIONS"
+                    ],
+
+                # ====================================================
+                # HEADER VALUES
+                # ====================================================
+                "saved_mode_of_delivery":
+                    saved_header.get(
+                        "modeOfDelivery",
+                        ""
+                    ),
+
+                "saved_delivery_terms":
+                    saved_header.get(
+                        "DeliveryTerms",
+                        ""
+                    ),
+
+                "saved_method_of_payment":
+                    saved_header.get(
+                        "methodOfPayment",
+                        ""
+                    ),
+
+                "saved_terms_of_payment":
+                    saved_header.get(
+                        "termsOfPayment",
+                        ""
+                    ),
+
+                # header payload date
+                "saved_reply_delivery_date":
+                    formatted_reply_delivery_date,
+
+                "saved_reply_delivery_terms":
+                    saved_header.get(
+                        "replyDeliveryTerms",
+                        ""
+                    ),
+
+                "saved_reply_mode_of_delivery":
+                    saved_header.get(
+                        "replyModeOfDelivery",
+                        ""
+                    ),
+
+                "saved_vendor_comments":
+                    saved_header.get(
+                        "vendorComments",
+                        ""
+                    ),
+
+                "items":
+                    items
+            }
         }
-    }
+#     items = []
+
+#     for item in lines:
+
+#         line_number = int(item["LINENUM"])
+#         saved       = saved_price_map.get(line_number, {})
+#         unit_price  = saved.get("unit_price", 0)
+
+#         # ── LINE STATUS ──────────────────────────────────────
+#         if "lineStatus" in saved:
+#             line_status = saved.get("lineStatus")
+#         else:
+#             line_status = unit_price > 0
+
+#         # ── VENDOR DELIVERY DATE ─────────────────────────────
+#         vendor_date           = saved.get("vendor_delivery_date")
+#         formatted_vendor_date = None
+
+#         if vendor_date:
+#             try:
+#                 formatted_vendor_date = format_utc_iso(
+#     saved.get(
+#         "vendor_delivery_date"
+#     )
+# )
+#             except Exception:
+#                 formatted_vendor_date = None
+
+#         items.append({
+#             "sl_no":                line_number,
+#             "material_description": item["MATERIAL_DESCRIPTION"],
+#             "material_code":        item["MATERIAL_CODE"],
+#             "quantity":             item["QUANTITY"],
+#             "uom":                  item["UOM"],
+#             "target_price":         round(float(item["TARGETPRICE"] or 0), 2),
+#             "comments":             item["COMMENTS"],
+#             "unit_price":           unit_price,
+#             "remarks":              saved.get("vendor_comments", ""),
+#             "lineStatus":           line_status,
+#             "currency":             item.get("CURRENCYCODE"),
+#             "rfq_delivery_date":    format_utc_iso(item.get("LINE_DELIVERY_DATE")),
+#             "vendor_delivery_date": formatted_vendor_date,   # ← now populated correctly
+#         })
+
+#     # ========================================================
+#     # FINAL RESPONSE
+#     # ========================================================
+#     return {
+
+#         "success": True,
+
+#         # has_draft = True only when actual unsaved draft (status=0)
+#         "has_draft": bool(saved_price_map) and draft_submissionstatus == 0,
+
+#         "data": {
+#             "rfq_case_id":              header["RFQCASEID"],
+#             "rfq_id":                   header["RFQID"],
+#             "document_title":           header["DOCUMENT_TITLE"],
+#             "issue_date":               format_utc_iso(header["ISSUE_DATE"]),
+#             "closing_date":             format_utc_iso(header["CLOSING_DATE"]),
+#             "time_remaining":           calculate_days_left(header["CLOSING_DATE"]),
+#             "expected_delivery_date":   format_utc_iso(header["EXPECTED_DELIVERY_DATE"]),
+#             "payment_term":             header["PAYMENT_TERM"]       or "-",
+#             "method_of_payment":        header["METHOD_OF_PAYMENT"]  or "-",
+#             "delivery_term":            header["DELIVERY_TERM"]      or "-",
+#             "mode_of_delivery":         header["MODE_OF_DELIVERY"]   or "-",
+#             "termsandconditions":       header["HIQ_TERMSANDCONDITIONS"],
+
+#             # ── SAVED VALUES FROM DRAFT/CONFIRMED ────────────
+#             "saved_mode_of_delivery":       saved_header.get("modeOfDelivery",      ""),
+#             "saved_delivery_terms":         saved_header.get("DeliveryTerms",        ""),
+#             "saved_method_of_payment":      saved_header.get("methodOfPayment",      ""),
+#             "saved_terms_of_payment":       saved_header.get("termsOfPayment",       ""),
+#             "saved_reply_delivery_date":   formatted_vendor_date,
+#             "saved_reply_delivery_terms":   saved_header.get("replyDeliveryTerms",   ""),
+#             "saved_reply_mode_of_delivery": saved_header.get("replyModeOfDelivery",  ""),
+#             "saved_vendor_comments":        saved_header.get("vendorComments",       ""),
+
+#             "items": items,
+#         }
+#     }
 
