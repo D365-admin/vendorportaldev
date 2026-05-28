@@ -29,7 +29,7 @@ def _get_approved_items(vendor_account: str) -> List[str]:
             """, (vendor_account,))
 
             return [
-                str(r[0]).strip().upper()
+                str(r[0]).upper()
                 for r in cur.fetchall()
                 if r[0]
             ]
@@ -80,7 +80,7 @@ def _get_valid_payload_items(
                 if item_number and line_number is not None:
                     valid.add((
                         int(line_number),
-                        str(item_number).strip().upper()
+                        str(item_number).upper()
                     ))
 
         return valid
@@ -173,7 +173,7 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
 
                     for line in line_rows:
                         line_num = int(line[0])
-                        item_id = str(line[1]).strip().upper()
+                        item_id = str(line[1]).upper()
 
                         if (line_num, item_id) in valid_items:
                             has_valid_line = True
@@ -308,7 +308,7 @@ def fetch_submitted_rfq_detail(
                 data = dict(zip(cols, row))
 
                 line_num = int(data["LINENUMBER"])
-                item_id = str(data["ITEMNUMBER"]).strip().upper()
+                item_id = str(data["ITEMNUMBER"]).upper()
 
                 if valid_payload and (line_num, item_id) not in valid_payload:
                     continue

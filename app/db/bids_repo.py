@@ -452,7 +452,16 @@ def get_pending_for_scheduler() -> List[Dict[str, Any]]:
             WHERE rn                = 1
               AND SUBMISSIONSTATUS  IN (?, ?)
               AND CONFIRMSAVE       = 'confirmSave'
-              AND CAST(EXPIRYDATE AS DATE) < CAST(GETDATE() AS DATE)
+              AND CAST(
+                    DATEADD(MINUTE,330,EXPIRYDATE)
+                AS DATE
+            )
+            <=
+            CAST(
+                    DATEADD(MINUTE,330,GETUTCDATE())
+                AS DATE
+            )
+            --   AND CAST(EXPIRYDATE AS DATE) < CAST(GETDATE() AS DATE)
             ORDER BY ID ASC
             """,
             STATUS_PENDING, STATUS_FAILED
