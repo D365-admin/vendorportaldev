@@ -456,7 +456,7 @@ def get_pending_for_scheduler() -> List[Dict[str, Any]]:
                     DATEADD(MINUTE,330,EXPIRYDATE)
                 AS DATE
             )
-            <=
+            <
             CAST(
                     DATEADD(MINUTE,330,GETUTCDATE())
                 AS DATE
