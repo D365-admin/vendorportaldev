@@ -31,13 +31,17 @@ def format_date(value):
 
 
 # app/utils/date_utils.py
-from datetime import datetime
+
+from datetime import datetime, date
 
 
 def format_utc_iso(dt) -> str | None:
     """
-    Converts datetime or dd/MM/yyyy string
+    Converts datetime/date/dd-MM-yyyy string
     into UTC ISO format.
+
+    Output:
+    2026-05-30T00:00:00Z
     """
 
     if dt is None:
@@ -45,7 +49,18 @@ def format_utc_iso(dt) -> str | None:
 
     # datetime object
     if isinstance(dt, datetime):
-        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return dt.strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+    # SQL DATE object (important fix)
+    if isinstance(dt, date):
+        return datetime.combine(
+            dt,
+            datetime.min.time()
+        ).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
 
     # dd/MM/yyyy string
     if isinstance(dt, str):
