@@ -6,5 +6,5 @@
 from pydantic import BaseModel
 
 class popdfschema(BaseModel):
-    confirmed: str
+    # confirmed: str
     purchId: str

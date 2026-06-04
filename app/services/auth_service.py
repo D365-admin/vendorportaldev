@@ -177,6 +177,7 @@ def verify_set_password_otp(
         "ok": True,
         "message": "OTP verified"
     }
+
 def set_password_after_otp(
     identifier: str,
     new_password: str,

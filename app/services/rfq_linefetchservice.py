@@ -58,34 +58,74 @@ def fetch_rfq_detail(
 
     # ========================================================
     # LINE QUERY
-    # ========================================================
-    lines_query = f"""
-        SELECT
-            RL.LINENUM,
-            RL.ITEMID AS MATERIAL_CODE,
-            IT.NAME AS MATERIAL_DESCRIPTION,
-            RL.QTYORDERED AS QUANTITY,
-            RL.PURCHUNIT AS UOM,
-            RL.HIQ_TARGETPRICE AS TARGETPRICE,
-            RL.HIQ_COMMENTS AS COMMENTS,
-            RL.CURRENCYCODE,
-            RL.DELIVERYDATE AS LINE_DELIVERY_DATE
+    # ======================================================== 
+    lines_query=f"""
+WITH LatestLines AS (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY RFQID, LINENUM
+               ORDER BY RECID DESC
+           ) AS rn
+    FROM sandbox.D365_PURCHRFQLINE
+    WHERE RFQID = ?
+)
 
-        FROM {SCHEMA}.D365_PURCHRFQLINE RL WITH (NOLOCK)
+SELECT
+    RL.LINENUM,
+    RL.ITEMID AS MATERIAL_CODE,
+    IT.NAME AS MATERIAL_DESCRIPTION,
+    RL.QTYORDERED AS QUANTITY,
+    RL.PURCHUNIT AS UOM,
+    RL.HIQ_TARGETPRICE AS TARGETPRICE,
+    RL.HIQ_COMMENTS AS COMMENTS,
+    RL.CURRENCYCODE,
+    RL.DELIVERYDATE AS LINE_DELIVERY_DATE,
+    RL.RECID
+FROM LatestLines RL
 
-        LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT WITH (NOLOCK)
-            ON IT.ITEMID = RL.ITEMID
+LEFT JOIN sandbox.D365_INVENTTABLE IT
+    ON IT.ITEMID = RL.ITEMID
 
-        INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL WITH (NOLOCK)
-            ON AVL.ITEMID = RL.ITEMID
-            AND AVL.PDSAPPROVEDVENDOR = ?
-            AND AVL.VALIDFROM <= GETUTCDATE()
-            AND AVL.VALIDTO >= GETUTCDATE()
+WHERE RL.rn = 1
 
-        WHERE RL.RFQID = ?
+AND EXISTS (
+    SELECT 1
+    FROM sandbox.D365_PDSAPPROVEDVENDORLIST AVL
+    WHERE AVL.ITEMID = RL.ITEMID
+      AND AVL.PDSAPPROVEDVENDOR = ?
+      AND AVL.VALIDFROM <= GETUTCDATE()
+      AND AVL.VALIDTO >= GETUTCDATE()
+)
 
-        ORDER BY RL.LINENUM
+ORDER BY RL.LINENUM;
     """
+    # lines_query = f"""
+    #     SELECT
+    #         RL.LINENUM,
+    #         RL.ITEMID AS MATERIAL_CODE,
+    #         IT.NAME AS MATERIAL_DESCRIPTION,
+    #         RL.QTYORDERED AS QUANTITY,
+    #         RL.PURCHUNIT AS UOM,
+    #         RL.HIQ_TARGETPRICE AS TARGETPRICE,
+    #         RL.HIQ_COMMENTS AS COMMENTS,
+    #         RL.CURRENCYCODE,
+    #         RL.DELIVERYDATE AS LINE_DELIVERY_DATE
+
+    #     FROM {SCHEMA}.D365_PURCHRFQLINE RL WITH (NOLOCK)
+
+    #     LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT WITH (NOLOCK)
+    #         ON IT.ITEMID = RL.ITEMID
+
+    #     INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL WITH (NOLOCK)
+    #         ON AVL.ITEMID = RL.ITEMID
+    #         AND AVL.PDSAPPROVEDVENDOR = ?
+    #         AND AVL.VALIDFROM <= GETUTCDATE()
+    #         AND AVL.VALIDTO >= GETUTCDATE()
+
+    #     WHERE RL.RFQID = ?
+
+    #     ORDER BY RL.LINENUM
+    # """
 
     # ========================================================
     # DRAFT QUERY
@@ -125,7 +165,7 @@ def fetch_rfq_detail(
         header = dict(zip(cols, row))
 
         # LINES
-        cursor.execute(lines_query, (vendor_account, rfq_id))
+        cursor.execute(lines_query, (rfq_id,vendor_account))
         line_rows = cursor.fetchall()
 
         line_cols = [c[0] for c in cursor.description]
