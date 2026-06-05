@@ -63,7 +63,7 @@ def fetch_rfq_detail(
 WITH LatestLines AS (
     SELECT *,
            ROW_NUMBER() OVER (
-               PARTITION BY RFQID, LINENUM
+               PARTITION BY RFQID, LINENUM, ITEMID
                ORDER BY RECID DESC
            ) AS rn
     FROM sandbox.D365_PURCHRFQLINE

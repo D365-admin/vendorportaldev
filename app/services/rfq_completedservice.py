@@ -448,99 +448,101 @@ def fetch_completed_rfq_detail(
         cur.execute(f"""
             SELECT TOP 1
 
-                RT.RFQID,
+    RT.RFQID,
 
-                RT.CURRENCYCODE,
+    RT.CURRENCYCODE,
 
-                RT.DELIVERYDATE
-                    AS REPLY_DELIVERY_DATE,
+    RT.DELIVERYDATE
+        AS REPLY_DELIVERY_DATE,
 
-                RT.DLVMODE
-                    AS REPLY_DELIVERY_MODE,
+    RT.DLVMODE
+        AS REPLY_DELIVERY_MODE,
 
-                RT.DLVTERM
-                    AS REPLY_DELIVERY_TERM,
+    RT.DLVTERM
+        AS REPLY_DELIVERY_TERM,
 
-                RT.PAYMENT
-                    AS REPLY_PAYMENT_TERM,
+    RT.PAYMENT
+        AS REPLY_PAYMENT_TERM,
 
-                RT.VENDREF,
+    RT.VENDREF,
 
-                RT.TOTALSCORE,
+    RT.TOTALSCORE,
 
-                RT.RANK,
+    RT.RANK,
 
-                RT.VALIDFROM,
+    RT.VALIDFROM,
 
-                RT.VALIDTO,
+    RT.VALIDTO,
 
-                RT.VALIDITYDATESTART,
+    RT.VALIDITYDATESTART,
 
-                RT.VALIDITYDATEEND,
+    RT.VALIDITYDATEEND,
 
-                RT.REPLYPROGRESSSTATUS,
+    RT.REPLYPROGRESSSTATUS,
 
-                RT.HIQ_COMMENTS
-                    AS REMARKS,
+    RT.HIQ_COMMENTS
+        AS REMARKS,
 
-                T.RFQCASEID
-                    AS RFQ_CASE_ID,
+    T.RFQCASEID
+        AS RFQ_CASE_ID,
 
-                C.EXPIRYDATETIME
-                    AS CLOSING_DATE,
+    C.EXPIRYDATETIME
+        AS CLOSING_DATE,
 
-                C.CREATEDDATETIME
-                    AS ISSUE_DATE,
+    C.CREATEDDATETIME
+        AS ISSUE_DATE,
 
-                C.DELIVERYDATE
-                    AS EXPECTED_DELIVERY_DATE,
+    C.DELIVERYDATE
+        AS EXPECTED_DELIVERY_DATE,
 
-                C.NAME
-                    AS DOCUMENT_TITLE,
+    C.NAME
+        AS DOCUMENT_TITLE,
 
-                PM.NAME
-                    AS PAYMENT_MODE,
+    PM.NAME
+        AS PAYMENT_MODE,
 
-                PT.DESCRIPTION
-                    AS PAYMENT_TERM,
+    PT.DESCRIPTION
+        AS PAYMENT_TERM,
 
-                DM.TXT
-                    AS DELIVERY_MODE,
+    DM.TXT
+        AS DELIVERY_MODE,
 
-                DT.TXT
-                    AS DELIVERY_TERM,
+    DT.TXT
+        AS DELIVERY_TERM,
 
-                T.HIQ_TERMSANDCONDITIONS
+    T.HIQ_TERMSANDCONDITIONS
 
-            FROM {SCHEMA}.D365_PURCHRFQREPLYTABLE RT
-            WITH (NOLOCK)
+FROM {SCHEMA}.D365_PURCHRFQREPLYTABLE RT
+WITH (NOLOCK)
 
-            INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
-            WITH (NOLOCK)
-                ON T.RFQID = RT.RFQID
-               AND T.VENDACCOUNT = ?
+INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
+WITH (NOLOCK)
+    ON T.RFQID = RT.RFQID
+   AND T.VENDACCOUNT = ?
 
-            LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE C
-            WITH (NOLOCK)
-                ON C.RFQCASEID = T.RFQCASEID
+LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE C
+WITH (NOLOCK)
+    ON C.RFQCASEID = T.RFQCASEID
 
-            LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
-            WITH (NOLOCK)
-                ON C.PAYMMODE = PM.PAYMMODE
+LEFT JOIN {SCHEMA}.D365_PAYMMODETABLE PM
+WITH (NOLOCK)
+    ON C.PAYMMODE = PM.PAYMMODE
 
-            LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
-            WITH (NOLOCK)
-                ON C.PAYMENT = PT.PAYMTERMID
+LEFT JOIN {SCHEMA}.D365_PAYMTERM PT
+WITH (NOLOCK)
+    ON C.PAYMENT = PT.PAYMTERMID
 
-            LEFT JOIN {SCHEMA}.D365_DLVMODE DM
-            WITH (NOLOCK)
-                ON C.DLVMODE = DM.CODE
+LEFT JOIN {SCHEMA}.D365_DLVMODE DM
+WITH (NOLOCK)
+    ON C.DLVMODE = DM.CODE
 
-            LEFT JOIN {SCHEMA}.D365_DLVTERM DT
-            WITH (NOLOCK)
-                ON C.DLVTERM = DT.CODE
+LEFT JOIN {SCHEMA}.D365_DLVTERM DT
+WITH (NOLOCK)
+    ON C.DLVTERM = DT.CODE
 
-            WHERE RT.RFQID = ?
+WHERE RT.RFQID = ?
+
+ORDER BY RT.RECID DESC
         """, (vendor_account, rfq_id))
 
         row = cur.fetchone()
