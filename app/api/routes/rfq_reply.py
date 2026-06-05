@@ -85,23 +85,44 @@ def update_rfq_reply(payload: RFQReplyPayload):
 # ══════════════════════════════════════════════════════════
 def has_valid_lines(payload: dict) -> bool:
     """
-    Returns True if at least one line has:
-    - lineStatus = True (confirmed)
-    - unitPrice > 0
+    Returns True if at least ONE line has
+    lineStatus=True AND unitPrice > 0.
+    If ALL lines are draft or zero price → returns False.
     """
     items = payload.get("Item", []) or payload.get("rfqItems", [])
 
     for item in items:
-        line_status = item.get("lineStatus", False)
+
+        line_status = item.get("lineStatus", True)
+
         if isinstance(line_status, str):
             line_status = line_status.lower() == "true"
 
         unit_price = float(item.get("unitPrice") or 0)
 
         if line_status and unit_price > 0:
-            return True   # at least one valid line found
+            return True  # at least one valid line found
 
     return False  # all lines are draft or zero price
+# def has_valid_lines(payload: dict) -> bool:
+#     """
+#     Returns True if at least one line has:
+#     - lineStatus = True (confirmed)
+#     - unitPrice > 0
+#     """
+#     items = payload.get("Item", []) or payload.get("rfqItems", [])
+
+#     for item in items:
+#         line_status = item.get("lineStatus", False)
+#         if isinstance(line_status, str):
+#             line_status = line_status.lower() == "true"
+
+#         unit_price = float(item.get("unitPrice") or 0)
+
+#         if line_status and unit_price > 0:
+#             return True   # at least one valid line found
+
+#     return False  # all lines are draft or zero price
 def release_expired_bids():
     print(f"\n[SCHEDULER] Starting at {datetime.now()}")
 
@@ -130,14 +151,13 @@ def release_expired_bids():
             continue
 
         # ── CHECK AT LEAST ONE VALID CONFIRMED LINE ──────────
-        # ← NEW: Don't send header if ALL lines are draft
         if not has_valid_lines(payload):
             mark_failed(
                 row_id,
                 "No confirmed lines with price > 0. All lines are draft.",
                 attempts
             )
-            print(f"[SCHEDULER] ID={row_id} FAILED — all lines are draft or zero price")
+            print(f"[SCHEDULER] ID={row_id} FAILED — all lines draft or zero price")
             continue
 
         # ── STEP 1: INSERT HIQ_VENDORBIDSUBMISSIONHEADER ─────
@@ -171,69 +191,138 @@ def release_expired_bids():
         print(f"[SCHEDULER] ID={row_id} COMPLETE → SUBMISSIONSTATUS=1")
 
     print(f"[SCHEDULER] Done at {datetime.now()}\n")
-def release_expired_bids():
-    """
-    Moves confirmed pending bids from HIQ_VENDORRFQREPLIES
-    into HIQ_VENDORBIDSUBMISSIONHEADER + HIQ_VENDORBIDSUBMISSIONLINE.
-    Updates SUBMISSIONSTATUS=1 on success.
-    """
-    print(f"\n[SCHEDULER] Starting at {datetime.now()}")
+# def release_expired_bids():
+#     print(f"\n[SCHEDULER] Starting at {datetime.now()}")
 
-    pending = get_pending_for_scheduler()
+#     pending = get_pending_for_scheduler()
 
-    if not pending:
-        print("[SCHEDULER] No pending bids.")
-        return
+#     if not pending:
+#         print("[SCHEDULER] No pending bids.")
+#         return
 
-    print(f"[SCHEDULER] {len(pending)} bids to process")
+#     print(f"[SCHEDULER] {len(pending)} bids to process")
 
-    for item in pending:
-        row_id         = item["id"]
-        payload        = item["payload"]
-        rfq_id         = item["rfq_id"]
-        vendor_account = item["vendor_account"]
-        attempts       = item["attempts"]
+#     for item in pending:
+#         row_id         = item["id"]
+#         payload        = item["payload"]
+#         rfq_id         = item["rfq_id"]
+#         vendor_account = item["vendor_account"]
+#         attempts       = item["attempts"]
 
-        print(f"\n[SCHEDULER] ID={row_id} | RFQ={rfq_id} | Vendor={vendor_account}")
+#         print(f"\n[SCHEDULER] ID={row_id} | RFQ={rfq_id} | Vendor={vendor_account}")
 
-        # Validate payload has items
-        items_list = payload.get("Item", []) or payload.get("rfqItems", [])
-        if not items_list:
-            mark_failed(row_id, "No items in payload", attempts)
-            print(f"[SCHEDULER] ID={row_id} FAILED — no items")
-            continue
+#         # ── CHECK ITEMS EXIST ────────────────────────────────
+#         items_list = payload.get("Item", []) or payload.get("rfqItems", [])
+#         if not items_list:
+#             mark_failed(row_id, "No items in payload", attempts)
+#             print(f"[SCHEDULER] ID={row_id} FAILED — no items")
+#             continue
 
-        # ── STEP 1: INSERT HIQ_VENDORBIDSUBMISSIONHEADER ──
-        try:
-            header_id = insert_bid_header(
-                rfq_replies_id=row_id,
-                payload=payload
-            )
-            print(f"[SCHEDULER] Header → ID={header_id}")
-        except Exception as e:
-            mark_failed(row_id, f"Header insert failed: {str(e)[:500]}", attempts)
-            print(f"[SCHEDULER] ID={row_id} HEADER FAILED: {e}")
-            continue
+#         # ── CHECK AT LEAST ONE VALID CONFIRMED LINE ──────────
+#         # ← NEW: Don't send header if ALL lines are draft
+#         if not has_valid_lines(payload):
+#             mark_failed(
+#                 row_id,
+#                 "No confirmed lines with price > 0. All lines are draft.",
+#                 attempts
+#             )
+#             print(f"[SCHEDULER] ID={row_id} FAILED — all lines are draft or zero price")
+#             continue
 
-        # ── STEP 2: INSERT HIQ_VENDORBIDSUBMISSIONLINE ────
-        try:
-            line_count = insert_bid_lines(
-                rfq_id=rfq_id,
-                header_id=header_id,
-                vendor_account=vendor_account,
-                payload=payload
-            )
-            print(f"[SCHEDULER] Lines → {line_count} inserted")
-        except Exception as e:
-            mark_failed(row_id, f"Lines insert failed: {str(e)[:500]}", attempts)
-            print(f"[SCHEDULER] ID={row_id} LINES FAILED: {e}")
-            continue
+#         # ── STEP 1: INSERT HIQ_VENDORBIDSUBMISSIONHEADER ─────
+#         try:
+#             header_id = insert_bid_header(
+#                 rfq_replies_id=row_id,
+#                 payload=payload
+#             )
+#             print(f"[SCHEDULER] Header → ID={header_id}")
+#         except Exception as e:
+#             mark_failed(row_id, f"Header insert failed: {str(e)[:500]}", attempts)
+#             print(f"[SCHEDULER] ID={row_id} HEADER FAILED: {e}")
+#             continue
 
-        # ── STEP 3: UPDATE HIQ_VENDORRFQREPLIES → STATUS=1 
-        mark_all_sent_for_rfq(rfq_id, vendor_account)
-        print(f"[SCHEDULER] ID={row_id} COMPLETE → SUBMISSIONSTATUS=1")
+#         # ── STEP 2: INSERT HIQ_VENDORBIDSUBMISSIONLINE ───────
+#         try:
+#             line_count = insert_bid_lines(
+#                 rfq_id=rfq_id,
+#                 header_id=header_id,
+#                 vendor_account=vendor_account,
+#                 payload=payload
+#             )
+#             print(f"[SCHEDULER] Lines → {line_count} inserted")
+#         except Exception as e:
+#             mark_failed(row_id, f"Lines insert failed: {str(e)[:500]}", attempts)
+#             print(f"[SCHEDULER] ID={row_id} LINES FAILED: {e}")
+#             continue
 
-    print(f"[SCHEDULER] Done at {datetime.now()}\n")
+#         # ── STEP 3: MARK SENT ────────────────────────────────
+#         mark_all_sent_for_rfq(rfq_id, vendor_account)
+#         print(f"[SCHEDULER] ID={row_id} COMPLETE → SUBMISSIONSTATUS=1")
+
+#     print(f"[SCHEDULER] Done at {datetime.now()}\n")
+# def release_expired_bids():
+#     """
+#     Moves confirmed pending bids from HIQ_VENDORRFQREPLIES
+#     into HIQ_VENDORBIDSUBMISSIONHEADER + HIQ_VENDORBIDSUBMISSIONLINE.
+#     Updates SUBMISSIONSTATUS=1 on success.
+#     """
+#     print(f"\n[SCHEDULER] Starting at {datetime.now()}")
+
+#     pending = get_pending_for_scheduler()
+
+#     if not pending:
+#         print("[SCHEDULER] No pending bids.")
+#         return
+
+#     print(f"[SCHEDULER] {len(pending)} bids to process")
+
+#     for item in pending:
+#         row_id         = item["id"]
+#         payload        = item["payload"]
+#         rfq_id         = item["rfq_id"]
+#         vendor_account = item["vendor_account"]
+#         attempts       = item["attempts"]
+
+#         print(f"\n[SCHEDULER] ID={row_id} | RFQ={rfq_id} | Vendor={vendor_account}")
+
+#         # Validate payload has items
+#         items_list = payload.get("Item", []) or payload.get("rfqItems", [])
+#         if not items_list:
+#             mark_failed(row_id, "No items in payload", attempts)
+#             print(f"[SCHEDULER] ID={row_id} FAILED — no items")
+#             continue
+
+#         # ── STEP 1: INSERT HIQ_VENDORBIDSUBMISSIONHEADER ──
+#         try:
+#             header_id = insert_bid_header(
+#                 rfq_replies_id=row_id,
+#                 payload=payload
+#             )
+#             print(f"[SCHEDULER] Header → ID={header_id}")
+#         except Exception as e:
+#             mark_failed(row_id, f"Header insert failed: {str(e)[:500]}", attempts)
+#             print(f"[SCHEDULER] ID={row_id} HEADER FAILED: {e}")
+#             continue
+
+#         # ── STEP 2: INSERT HIQ_VENDORBIDSUBMISSIONLINE ────
+#         try:
+#             line_count = insert_bid_lines(
+#                 rfq_id=rfq_id,
+#                 header_id=header_id,
+#                 vendor_account=vendor_account,
+#                 payload=payload
+#             )
+#             print(f"[SCHEDULER] Lines → {line_count} inserted")
+#         except Exception as e:
+#             mark_failed(row_id, f"Lines insert failed: {str(e)[:500]}", attempts)
+#             print(f"[SCHEDULER] ID={row_id} LINES FAILED: {e}")
+#             continue
+
+#         # ── STEP 3: UPDATE HIQ_VENDORRFQREPLIES → STATUS=1 
+#         mark_all_sent_for_rfq(rfq_id, vendor_account)
+#         print(f"[SCHEDULER] ID={row_id} COMPLETE → SUBMISSIONSTATUS=1")
+
+#     print(f"[SCHEDULER] Done at {datetime.now()}\n")
 
 
 # ══════════════════════════════════════════════════════════

@@ -19,7 +19,7 @@ from app.api.routes.dashboard_router import router as dashboard_router
 from app.api.routes.dropdownrouter import router as dropdown
 from app.api.routes.rfq_expirylinerouter import router as rfq_expirylinerouter
 from app.api.routes.notification_router import router as notification_router
-
+from app.api.routes.po_pdfrouter import router as po_pdfrouter
 # RFQ Reply Scheduler
 from app.api.routes.rfq_reply import (
     router as rfq_replyrouter,
@@ -79,7 +79,7 @@ app.include_router(dropdown)
 app.include_router(rfq_expirylinerouter)
 app.include_router(notification_router)
 app.include_router(rfq_replyrouter)
-
+app.include_router(po_pdfrouter)
 # ======================================
 # Startup / Shutdown Events
 # ======================================

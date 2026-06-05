@@ -130,6 +130,27 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                 WHERE UPPER(H.VENDORACCOUNT) = UPPER(?)
                   AND H.STATUS = 2
                   AND L.ITEMNUMBER IN ({placeholders})
+                  AND EXISTS
+                (
+                    SELECT 1
+                    FROM
+                    (
+                        SELECT
+                            RFQID,
+                            LINENUM,
+                            STATUS,
+                            ROW_NUMBER() OVER
+                            (
+                                PARTITION BY RFQID, LINENUM
+                                ORDER BY RECID DESC
+                            ) RN
+                        FROM sandbox.D365_PURCHRFQLINE
+                    ) X
+                    WHERE X.RFQID = H.RFQID
+                    AND X.LINENUM = L.LINENUMBER
+                    AND X.RN = 1
+                    AND X.STATUS < 3
+                )
                 GROUP BY
                     H.RFQCASEID,
                     H.RFQID,

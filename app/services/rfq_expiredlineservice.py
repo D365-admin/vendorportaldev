@@ -103,61 +103,118 @@ def fetch_rfq_detail(
 
     # ========================================================
     # LINE QUERY
-    # ========================================================
-    lines_query = f"""
-        SELECT
+    # ======================================================== 
+    lines_query=f"""
+    WITH RFQ_LINES AS
+(
+    SELECT
+        RL.*,
+        ROW_NUMBER() OVER
+        (
+            PARTITION BY
+                RL.LINENUM,
+                RL.ITEMID
+            ORDER BY
+                RL.RECID DESC
+        ) AS RN
+    FROM {SCHEMA}.D365_PURCHRFQLINE RL
+    WITH (NOLOCK)
+    WHERE RL.RFQID = ?
+)
 
-            RL.LINENUM,
+SELECT
+    RL.LINENUM,
 
-            RL.ITEMID
-                AS MATERIAL_CODE,
+    RL.ITEMID AS MATERIAL_CODE,
 
-            IT.NAME
-                AS MATERIAL_DESCRIPTION,
+    IT.NAME AS MATERIAL_DESCRIPTION,
 
-            RL.QTYORDERED
-                AS QUANTITY,
+    RL.QTYORDERED AS QUANTITY,
 
-            RL.PURCHUNIT
-                AS UOM,
+    RL.PURCHUNIT AS UOM,
 
-            RL.HIQ_TARGETPRICE
-                AS TARGETPRICE,
+    RL.HIQ_TARGETPRICE AS TARGETPRICE,
 
-            RL.HIQ_COMMENTS
-                AS COMMENTS,
+    RL.HIQ_COMMENTS AS COMMENTS,
 
-            RL.CURRENCYCODE,
+    RL.CURRENCYCODE,
 
-            RL.DELIVERYDATE
-                AS LINE_DELIVERY_DATE,
+    RL.DELIVERYDATE AS LINE_DELIVERY_DATE,
 
-            RPL.DELIVERYDATE
-                AS VENDORREPLY_DELIVERY_DATE
+    RPL.DELIVERYDATE AS VENDORREPLY_DELIVERY_DATE,
 
-        FROM {SCHEMA}.D365_PURCHRFQLINE RL
-        WITH (NOLOCK)
+    RL.RECID
 
-        LEFT JOIN {SCHEMA}.D365_PURCHRFQREPLYLINE RPL
-        WITH (NOLOCK)
+FROM RFQ_LINES RL
 
-            ON RPL.RFQLINERECID = RL.RECID
+LEFT JOIN {SCHEMA}.D365_PURCHRFQREPLYLINE RPL
+    ON RPL.RFQLINERECID = RL.RECID
 
-        LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT
-        WITH (NOLOCK)
+LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT
+    ON IT.ITEMID = RL.ITEMID
 
-            ON IT.ITEMID = RL.ITEMID
+INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
+    ON AVL.ITEMID = RL.ITEMID
+   AND AVL.PDSAPPROVEDVENDOR = ?
 
-        INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
-        WITH (NOLOCK)
+WHERE RL.RN = 1
 
-            ON AVL.ITEMID = RL.ITEMID
-           AND AVL.PDSAPPROVEDVENDOR = ?
+ORDER BY RL.LINENUM
+ """
+    # lines_query = f"""
+    #     SELECT
 
-        WHERE RL.RFQID = ?
+    #         RL.LINENUM,
 
-        ORDER BY RL.LINENUM
-    """
+    #         RL.ITEMID
+    #             AS MATERIAL_CODE,
+
+    #         IT.NAME
+    #             AS MATERIAL_DESCRIPTION,
+
+    #         RL.QTYORDERED
+    #             AS QUANTITY,
+
+    #         RL.PURCHUNIT
+    #             AS UOM,
+
+    #         RL.HIQ_TARGETPRICE
+    #             AS TARGETPRICE,
+
+    #         RL.HIQ_COMMENTS
+    #             AS COMMENTS,
+
+    #         RL.CURRENCYCODE,
+
+    #         RL.DELIVERYDATE
+    #             AS LINE_DELIVERY_DATE,
+
+    #         RPL.DELIVERYDATE
+    #             AS VENDORREPLY_DELIVERY_DATE
+
+    #     FROM {SCHEMA}.D365_PURCHRFQLINE RL
+    #     WITH (NOLOCK)
+
+    #     LEFT JOIN {SCHEMA}.D365_PURCHRFQREPLYLINE RPL
+    #     WITH (NOLOCK)
+
+    #         ON RPL.RFQLINERECID = RL.RECID
+
+    #     LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT
+    #     WITH (NOLOCK)
+
+    #         ON IT.ITEMID = RL.ITEMID
+
+    #     INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
+    #     WITH (NOLOCK)
+
+    #         ON AVL.ITEMID = RL.ITEMID
+    #        AND AVL.PDSAPPROVEDVENDOR = ?
+
+    #     WHERE RL.RFQID = ?
+
+    #     ORDER BY RL.LINENUM
+    # """
 
 
     # ========================================================
@@ -218,8 +275,8 @@ def fetch_rfq_detail(
         cursor.execute(
             lines_query,
             (
-                vendor_account,
-                rfq_id
+                 rfq_id,vendor_account
+               
             )
         )
 
