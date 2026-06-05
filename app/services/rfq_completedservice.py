@@ -218,21 +218,23 @@ def fetch_completed_rfqs(
 
         WHERE T.VENDACCOUNT = ?
           AND T.RFQID IN ({placeholders})
-
           AND EXISTS (
-
-              SELECT 1
-
-              FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL2
-              WITH (NOLOCK)
-
-              INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
-              WITH (NOLOCK)
-                  ON PL.RECID = RL2.RFQLINERECID
-
-              WHERE RL2.RFQID = T.RFQID
-                AND PL.STATUS >= 3
-          )
+            SELECT 1
+            FROM (
+                SELECT
+                    RFQID,
+                    LINENUM,
+                    STATUS,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY RFQID, LINENUM
+                        ORDER BY RECID DESC
+                    ) AS RN
+                FROM {SCHEMA}.D365_PURCHRFQLINE WITH (NOLOCK)
+            ) PL
+            WHERE PL.RFQID = T.RFQID
+            AND PL.RN = 1
+            AND PL.STATUS >= 3
+        )
     """
 
     result = []
@@ -278,23 +280,56 @@ def fetch_completed_rfqs(
             # QUOTED AMOUNT
             # =================================================
             cur.execute(f"""
-                SELECT
+                        SELECT
 
-                    ISNULL(
-                        SUM(RL.LINEAMOUNT),
-                        0
-                    )
+                ISNULL(
+                    SUM(RL.LINEAMOUNT),
+                    0
+                )
 
-                FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
-                WITH (NOLOCK)
+            FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
+            WITH (NOLOCK)
 
-                INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
-                WITH (NOLOCK)
-                    ON PL.RECID = RL.RFQLINERECID
+            INNER JOIN
+            (
+                SELECT *
+                FROM
+                (
+                    SELECT
+                        *,
+                        ROW_NUMBER() OVER
+                        (
+                            PARTITION BY RFQID, LINENUM
+                            ORDER BY RECID DESC
+                        ) AS RN
+                    FROM {SCHEMA}.D365_PURCHRFQLINE
+                    WITH (NOLOCK)
+                ) X
+                WHERE X.RN = 1
+            ) PL
+                ON PL.RECID = RL.RFQLINERECID
 
-                WHERE RL.RFQID = ?
-                  AND PL.STATUS >= 3
+            WHERE RL.RFQID = ?
+            AND PL.STATUS >= 3
             """, (rfq_id,))
+            # cur.execute(f"""
+            #     SELECT
+
+            #         ISNULL(
+            #             SUM(RL.LINEAMOUNT),
+            #             0
+            #         )
+
+            #     FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
+            #     WITH (NOLOCK)
+
+            #     INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
+            #     WITH (NOLOCK)
+            #         ON PL.RECID = RL.RFQLINERECID
+
+            #     WHERE RL.RFQID = ?
+            #       AND PL.STATUS >= 3
+            # """, (rfq_id,))
 
             quoted_amount = float(
                 cur.fetchone()[0] or 0
@@ -527,96 +562,141 @@ def fetch_completed_rfq_detail(
         # ====================================================
         # LINES
         # ====================================================
-        cur.execute(f"""
-            SELECT
+        cur.execute(f"""WITH LatestRFQLine AS (
+                    SELECT *,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY RFQID, LINENUM
+                            ORDER BY RECID DESC
+                        ) AS RN
+                    FROM {SCHEMA}.D365_PURCHRFQLINE WITH (NOLOCK)
+                )
+                SELECT
+                    RL.LINENUM,
+                    RL.NAME AS ITEM_NAME,
+                    RL.PURCHQTY AS QUANTITY,
+                    RL.PURCHUNIT AS UOM,
+                    RL.PURCHPRICE AS UNIT_PRICE,
+                    RL.LINEAMOUNT AS NET_AMOUNT,
+                    RL.LINEDISC AS LINE_DISC,
+                    RL.LINEPERCENT AS LINE_PERCENT,
+                    RL.DELIVERYDATE AS DELIVERY_DATE,
+                    RL.HIQ_COMMENTS AS VENDOR_COMMENTS,
+                    RL.VALIDFROM AS LINE_VALID_FROM,
+                    RL.VALIDTO AS LINE_VALID_TO,
+                    RL.EXTERNALITEMID,
+                    PL.HIQ_TARGETPRICE AS TARGETPRICE,
+                    PL.HIQ_COMMENTS AS COMMENTS,
+                    PL.ITEMID,
+                    PL.STATUS,
+                    PL.CURRENCYCODE,
+                    PL.PURCHID,
+                    PL.DELIVERYDATE AS LINE_DELIVERY_DATE,
+                    RL.DELIVERYDATE AS VENDORREPLY_DELIVERY_DATE,
+                    CASE PL.STATUS
+                        WHEN 3 THEN 'Rejected'
+                        WHEN 4 THEN 'Accepted'
+                        WHEN 5 THEN 'Canceled'
+                        WHEN 6 THEN 'Declined'
+                        ELSE 'Under Review'
+                    END AS HIQ_DECISION
+                FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL WITH (NOLOCK)
+                INNER JOIN LatestRFQLine PL
+                    ON PL.RECID = RL.RFQLINERECID
+                AND PL.RN = 1
+                WHERE RL.RFQID = ?
+                AND PL.STATUS >= 3
+                ORDER BY RL.LINENUM
+                    """, (rfq_id,))
+        # cur.execute(f"""
+        #     SELECT
 
-                RL.LINENUM,
+        #         RL.LINENUM,
 
-                RL.NAME
-                    AS ITEM_NAME,
+        #         RL.NAME
+        #             AS ITEM_NAME,
 
-                RL.PURCHQTY
-                    AS QUANTITY,
+        #         RL.PURCHQTY
+        #             AS QUANTITY,
 
-                RL.PURCHUNIT
-                    AS UOM,
+        #         RL.PURCHUNIT
+        #             AS UOM,
 
-                RL.PURCHPRICE
-                    AS UNIT_PRICE,
+        #         RL.PURCHPRICE
+        #             AS UNIT_PRICE,
 
-                RL.LINEAMOUNT
-                    AS NET_AMOUNT,
+        #         RL.LINEAMOUNT
+        #             AS NET_AMOUNT,
 
-                RL.LINEDISC
-                    AS LINE_DISC,
+        #         RL.LINEDISC
+        #             AS LINE_DISC,
 
-                RL.LINEPERCENT
-                    AS LINE_PERCENT,
+        #         RL.LINEPERCENT
+        #             AS LINE_PERCENT,
 
-                RL.DELIVERYDATE
-                    AS DELIVERY_DATE,
+        #         RL.DELIVERYDATE
+        #             AS DELIVERY_DATE,
 
-                RL.HIQ_COMMENTS
-                    AS VENDOR_COMMENTS,
+        #         RL.HIQ_COMMENTS
+        #             AS VENDOR_COMMENTS,
 
-                RL.VALIDFROM
-                    AS LINE_VALID_FROM,
+        #         RL.VALIDFROM
+        #             AS LINE_VALID_FROM,
 
-                RL.VALIDTO
-                    AS LINE_VALID_TO,
+        #         RL.VALIDTO
+        #             AS LINE_VALID_TO,
 
-                RL.EXTERNALITEMID,
+        #         RL.EXTERNALITEMID,
 
-                PL.HIQ_TARGETPRICE
-                    AS TARGETPRICE,
+        #         PL.HIQ_TARGETPRICE
+        #             AS TARGETPRICE,
 
-                PL.HIQ_COMMENTS
-                    AS COMMENTS,
+        #         PL.HIQ_COMMENTS
+        #             AS COMMENTS,
 
-                PL.ITEMID,
+        #         PL.ITEMID,
 
-                PL.STATUS,
+        #         PL.STATUS,
 
-                PL.CURRENCYCODE,
+        #         PL.CURRENCYCODE,
 
-                PL.PURCHID,
+        #         PL.PURCHID,
 
-                PL.DELIVERYDATE
-                    AS LINE_DELIVERY_DATE,
+        #         PL.DELIVERYDATE
+        #             AS LINE_DELIVERY_DATE,
 
-                RL.DELIVERYDATE
-                    AS VENDORREPLY_DELIVERY_DATE,
+        #         RL.DELIVERYDATE
+        #             AS VENDORREPLY_DELIVERY_DATE,
 
-                CASE PL.STATUS
+        #         CASE PL.STATUS
 
-                    WHEN 3
-                        THEN 'Rejected'
+        #             WHEN 3
+        #                 THEN 'Rejected'
 
-                    WHEN 4
-                        THEN 'Accepted'
+        #             WHEN 4
+        #                 THEN 'Accepted'
 
-                    WHEN 5
-                        THEN 'Canceled'
+        #             WHEN 5
+        #                 THEN 'Canceled'
 
-                    WHEN 6
-                        THEN 'Declined'
+        #             WHEN 6
+        #                 THEN 'Declined'
 
-                    ELSE 'Under Review'
+        #             ELSE 'Under Review'
 
-                END AS HIQ_DECISION
+        #         END AS HIQ_DECISION
 
-            FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
-            WITH (NOLOCK)
+        #     FROM {SCHEMA}.D365_PURCHRFQREPLYLINE RL
+        #     WITH (NOLOCK)
 
-            INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
-            WITH (NOLOCK)
-                ON PL.RECID = RL.RFQLINERECID
+        #     INNER JOIN {SCHEMA}.D365_PURCHRFQLINE PL
+        #     WITH (NOLOCK)
+        #         ON PL.RECID = RL.RFQLINERECID
 
-            WHERE RL.RFQID = ?
-              AND PL.STATUS >= 3
+        #     WHERE RL.RFQID = ?
+        #       AND PL.STATUS >= 3
 
-            ORDER BY RL.LINENUM
-        """, (rfq_id,))
+        #     ORDER BY RL.LINENUM
+        # """, (rfq_id,))
 
         line_rows = cur.fetchall()
 
