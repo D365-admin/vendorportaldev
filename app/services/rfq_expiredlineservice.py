@@ -141,7 +141,7 @@ SELECT
 
     RL.DELIVERYDATE AS LINE_DELIVERY_DATE,
 
-    RPL.DELIVERYDATE AS VENDORREPLY_DELIVERY_DATE,
+    --RPL.DELIVERYDATE AS VENDORREPLY_DELIVERY_DATE,
 
     RL.RECID
 
@@ -440,6 +440,11 @@ ORDER BY RL.LINENUM
                                 "lineStatus",
                                 False
                             ),
+                           "delivery_date":
+                            item.get(
+                                "deliveryDate",
+                                ""
+                            ),
                     }
 
         except Exception:
@@ -542,13 +547,20 @@ ORDER BY RL.LINENUM
                         "LINE_DELIVERY_DATE"
                     )
                 ),
-
             "vendor_delivery_date":
                 format_utc_iso(
-                    item.get(
-                        "VENDORREPLY_DELIVERY_DATE"
+                    saved.get(
+                        "delivery_date"
                     )
-                ),
+                ) if saved.get(
+                    "delivery_date"
+    ) else None,
+            # "vendor_delivery_date":
+            #     format_utc_iso(
+            #         item.get(
+            #             "VENDORREPLY_DELIVERY_DATE"
+            #         )
+            #     ),
 
             "hiq_decision":
                 "Expired"
@@ -652,18 +664,24 @@ ORDER BY RL.LINENUM
                     ""
                 ),
 
+            # "reply_delivery_date":
+            #     saved_header.get(
+            #         "replyDeliveryDate",
+            #         ""
+            #     ),
             "reply_delivery_date":
+            format_utc_iso(
                 saved_header.get(
-                    "replyDeliveryDate",
-                    ""
-                ),
+                    "replyDeliveryDate"
+                )
+            ),
 
             "reply_delivery_mode":
                 saved_header.get(
                     "replyModeOfDelivery",
                     ""
                 ),
-
+            
             "reply_delivery_term":
                 saved_header.get(
                     "replyDeliveryTerms",
