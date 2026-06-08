@@ -885,34 +885,70 @@ def insert_bid_lines(
 # ══════════════════════════════════════════════════════════
 # UPDATE HIQ_VENDORRFQREPLIES AFTER SUCCESS
 # ══════════════════════════════════════════════════════════
-
 def mark_all_sent_for_rfq(rfq_id: str, vendor_account: str):
     """
     UPDATE HIQ_VENDORRFQREPLIES → SUBMISSIONSTATUS=1.
     Called after header+line inserted successfully.
-    No D365 response needed — data moved to Azure SQL tables.
     """
     with get_connection() as conn:
         cur = conn.cursor()
+
         cur.execute(
             f"""
             UPDATE {RFQ_REPLIES_TABLE}
-            SET    SUBMISSIONSTATUS = ?,
-                   SENDTOD365AT     = GETUTCDATE(),
-                   MODIFIEDDATETIME = GETUTCDATE(),
-                   MODIFIEDBY       = 'SCHEDULER',
-                   RECVERSION = ISNULL(RECVERSION,0) + 1
-                   --RECVERSION       = RECVERSION + 1
-            WHERE  RFQID           = ?
-              AND  VENDORACCOUNT   = ?
-              AND  SUBMISSIONSTATUS IN (?, ?)
+            SET
+                SUBMISSIONSTATUS = ?,
+                SENDTOD365AT     = GETUTCDATE(),
+                LASTERROR        = NULL,
+                D365RESPONSE     = NULL,
+                MODIFIEDDATETIME = GETUTCDATE(),
+                MODIFIEDBY       = 'SCHEDULER',
+                RECVERSION       = ISNULL(RECVERSION,0) + 1
+            WHERE RFQID = ?
+              AND VENDORACCOUNT = ?
+              AND SUBMISSIONSTATUS IN (?, ?)
             """,
             STATUS_SENT,
-            rfq_id, vendor_account,
-            STATUS_PENDING, STATUS_FAILED
+            rfq_id,
+            vendor_account,
+            STATUS_PENDING,
+            STATUS_FAILED
         )
+
         conn.commit()
-        print(f"[REPLY] RFQ={rfq_id} vendor={vendor_account} → SUBMISSIONSTATUS=1")
+
+        print(
+            f"[REPLY] RFQ={rfq_id} "
+            f"vendor={vendor_account} "
+            f"→ SUBMISSIONSTATUS=1"
+        )
+# def mark_all_sent_for_rfq(rfq_id: str, vendor_account: str):
+#     """
+#     UPDATE HIQ_VENDORRFQREPLIES → SUBMISSIONSTATUS=1.
+#     Called after header+line inserted successfully.
+#     No D365 response needed — data moved to Azure SQL tables.
+#     """
+#     with get_connection() as conn:
+#         cur = conn.cursor()
+#         cur.execute(
+#             f"""
+#             UPDATE {RFQ_REPLIES_TABLE}
+#             SET    SUBMISSIONSTATUS = ?,
+#                    SENDTOD365AT     = GETUTCDATE(),
+#                    MODIFIEDDATETIME = GETUTCDATE(),
+#                    MODIFIEDBY       = 'SCHEDULER',
+#                    RECVERSION = ISNULL(RECVERSION,0) + 1
+#                    --RECVERSION       = RECVERSION + 1
+#             WHERE  RFQID           = ?
+#               AND  VENDORACCOUNT   = ?
+#               AND  SUBMISSIONSTATUS IN (?, ?)
+#             """,
+#             STATUS_SENT,
+#             rfq_id, vendor_account,
+#             STATUS_PENDING, STATUS_FAILED
+#         )
+#         conn.commit()
+#         print(f"[REPLY] RFQ={rfq_id} vendor={vendor_account} → SUBMISSIONSTATUS=1")
 
 
 def mark_failed(row_id: int, error: str, current_attempts: int):
