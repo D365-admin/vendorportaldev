@@ -253,16 +253,16 @@ def fetch_submitted_rfq_detail(
     try:
         with get_connection() as conn:
             cur = conn.cursor()
-
-            cur.execute(f"""
-                SELECT TOP 1
+            cur.execute(f"""SELECT TOP 1
                     H.ID AS HEADERID,
                     H.RFQID,
                     H.RFQCASEID,
                     H.DOCUMENTTITLE,
                     H.VENDORACCOUNT,
                     H.EXPIRYDATE AS CLOSING_DATE,
-                    H.RECEIPTDATE AS ISSUE_DATE,
+
+                    L.CREATEDDATETIME AS ISSUE_DATE,
+
                     H.REPLYDELIVERYDATE AS DELIVERY_DATE,
                     H.REPLYDELIVERYDATE AS REPLY_DELIVERY_DATE,
                     H.REPLYMODEOFDELIVERY AS REPLY_DELIVERY_MODE,
@@ -277,11 +277,45 @@ def fetch_submitted_rfq_detail(
                     H.STATUS,
                     H.CREATEDDATETIME,
                     H.SUBMITTEDTOD365AT
+
                 FROM {BID_HEADER_TABLE} H WITH (NOLOCK)
+
+                LEFT JOIN {SCHEMA}.d365_PurchRFQCaseTable  L WITH (NOLOCK)
+                    ON L.RFQCASEID = H.RFQCASEID 
+
                 WHERE UPPER(H.RFQID) = UPPER(?)
-                  AND UPPER(H.VENDORACCOUNT) = UPPER(?)
+                AND UPPER(H.VENDORACCOUNT) = UPPER(?)
+
                 ORDER BY H.ID DESC
-            """, (rfq_id, vendor_account))
+                """,(rfq_id, vendor_account))
+            # cur.execute(f"""
+            #     SELECT TOP 1
+            #         H.ID AS HEADERID,
+            #         H.RFQID,
+            #         H.RFQCASEID,
+            #         H.DOCUMENTTITLE,
+            #         H.VENDORACCOUNT,
+            #         H.EXPIRYDATE AS CLOSING_DATE,
+            #         H.RECEIPTDATE AS ISSUE_DATE,
+            #         H.REPLYDELIVERYDATE AS DELIVERY_DATE,
+            #         H.REPLYDELIVERYDATE AS REPLY_DELIVERY_DATE,
+            #         H.REPLYMODEOFDELIVERY AS REPLY_DELIVERY_MODE,
+            #         H.REPLYDELIVERYTERMS AS REPLY_DELIVERY_TERM,
+            #         H.MODEOFDELIVERY AS DELIVERY_MODE,
+            #         H.DELIVERYTERMS AS DELIVERY_TERM,
+            #         H.METHODOFPAYMENT AS PAYMENT_MODE,
+            #         H.TERMSOFPAYMENT AS PAYMENT_TERM,
+            #         H.CURRENCY,
+            #         H.VENDORCOMMENTS AS REMARKS,
+            #         H.CONFIRMSAVE,
+            #         H.STATUS,
+            #         H.CREATEDDATETIME,
+            #         H.SUBMITTEDTOD365AT
+            #     FROM {BID_HEADER_TABLE} H WITH (NOLOCK)
+            #     WHERE UPPER(H.RFQID) = UPPER(?)
+            #       AND UPPER(H.VENDORACCOUNT) = UPPER(?)
+            #     ORDER BY H.ID DESC
+            # """, (rfq_id, vendor_account))
 
             header_row = cur.fetchone()
 
@@ -310,10 +344,15 @@ def fetch_submitted_rfq_detail(
                     L.REPLYDELIVERYDATETIME AS VENDOR_DELIVERY_DATE,
                     L.LINESTATUS,
                     L.CREATEDDATETIME,
-                    L.MODIFIEDDATETIME
+                    L.MODIFIEDDATETIME,
+                    RL.HIQ_TARGETPRICE AS TARGETPRICE
                 FROM {BID_LINE_TABLE} L WITH (NOLOCK)
                 LEFT JOIN {SCHEMA}.D365_INVENTTABLE IT WITH (NOLOCK)
-                    ON LTRIM(RTRIM(IT.ITEMID)) = LTRIM(RTRIM(L.ITEMNUMBER))
+                    ON LTRIM(RTRIM(IT.ITEMID)) = LTRIM(RTRIM(L.ITEMNUMBER)) 
+                LEFT JOIN {SCHEMA}.D365_PURCHRFQLINE RL WITH (NOLOCK)
+                    ON RL.RFQID = L.RFQID
+                AND RL.LINENUM = L.LINENUMBER
+                AND RL.ITEMID = L.ITEMNUMBER
                 WHERE L.HEADERID = ?
                   AND UPPER(L.RFQID) = UPPER(?)
                   AND UPPER(L.VENDORACCOUNT) = UPPER(?)
@@ -355,6 +394,10 @@ def fetch_submitted_rfq_detail(
                     "vendor_delivery_date": format_utc_iso(
                         data["VENDOR_DELIVERY_DATE"]
                     ),
+                    "target_price": (
+                    float(data["TARGETPRICE"])
+                    if data["TARGETPRICE"] is not None
+                    else 0),
                     "line_status": data["LINESTATUS"],
                     "hiq_decision": "Under Review"
                 })
