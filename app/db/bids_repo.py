@@ -152,7 +152,11 @@ def insert_reply(payload: Dict[str, Any]) -> int:
                         CONFIRMEDLINECOUNT   = ?,
                         DRAFTLINECOUNT       = ?,
                         UNCONFIRMEDLINECOUNT = ?,
-                        SUBMISSIONSTATUS     = ?,
+                        --SUBMISSIONSTATUS     = ?,
+                         SUBMISSIONSTATUS = CASE 
+                                            WHEN SUBMISSIONSTATUS = 1 THEN 1   -- don't reset if already sent
+                                            ELSE ? 
+                                            END,
                         MODIFIEDDATETIME     = GETUTCDATE(),
                         MODIFIEDBY           = 'PORTAL',
                         RECVERSION           = ISNULL(RECVERSION,0) + 1
@@ -381,6 +385,7 @@ def insert_reply(payload: Dict[str, Any]) -> int:
 
 
 def update_reply(payload: Dict[str, Any]) -> int:
+
     """UPDATE existing HIQ_VENDORRFQREPLIES with new payload."""
     rfq_id         = payload.get("rfqId")
     vendor_account = payload.get("vendorAccount")
@@ -461,7 +466,6 @@ def get_pending_for_scheduler() -> List[Dict[str, Any]]:
                     DATEADD(MINUTE,330,GETUTCDATE())
                 AS DATE
             )
-            --   AND CAST(EXPIRYDATE AS DATE) < CAST(GETDATE() AS DATE)
             ORDER BY ID ASC
             """,
             STATUS_PENDING, STATUS_FAILED
