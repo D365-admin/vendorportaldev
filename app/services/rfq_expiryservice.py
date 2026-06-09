@@ -1,3 +1,5 @@
+
+
 from app.db.base import (
     get_connection
 )
@@ -12,7 +14,7 @@ from app.core.config import settings
 SCHEMA = settings.DB_SCHEMA
 
 RFQ_REPLIES_TABLE = f"{SCHEMA}.HIQ_VendorRFQReplies"
-
+STATUS_DRAFT_ONLY = 3
 
 def fetch_vendor_expired_rfqs(
     vendor_account: str
@@ -213,6 +215,12 @@ def fetch_vendor_expired_rfqs(
 
             include_record = True
 
+        elif latest_reply["SUBMISSIONSTATUS"] == STATUS_DRAFT_ONLY:
+
+            status = "Draft Only"
+
+            include_record = True
+
         elif (
 
             latest_reply["SUBMISSIONSTATUS"] == 1
@@ -231,6 +239,30 @@ def fetch_vendor_expired_rfqs(
         else:
 
             include_record = False
+        # if not latest_reply:
+
+        #     status = "Not Opened"
+
+        #     include_record = True
+
+        # elif (
+
+        #     latest_reply["SUBMISSIONSTATUS"] == 1
+
+        #     and
+
+        #     (
+        #         latest_reply["DRAFTLINECOUNT"] or 0
+        #     ) > 0
+        # ):
+
+        #     status = "Drafted"
+
+        #     include_record = True
+
+        # else:
+
+        #     include_record = False
 
         # ====================================================
         # SKIP
