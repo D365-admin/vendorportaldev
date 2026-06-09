@@ -217,7 +217,7 @@ def fetch_vendor_expired_rfqs(
 
         elif latest_reply["SUBMISSIONSTATUS"] == STATUS_DRAFT_ONLY:
 
-            status = "Draft Only"
+            status = "Drafted"
 
             include_record = True
 
