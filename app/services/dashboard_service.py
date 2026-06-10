@@ -15,7 +15,8 @@ from app.services.rfq_submissionservice import (
 from app.services.rfq_inprogressservice import (
     fetch_inprogress_rfqs
 )
-from app.services.rfq_completedservice import (fetch_completed_rfqs)
+from app.services.rfq_completedservice import (fetch_completed_rfqs) 
+from app.services.rfq_expiryservice import fetch_vendor_expired_rfqs
 from datetime import (
     datetime,
     timedelta
@@ -452,6 +453,8 @@ def fetch_dashboard_metrics(
 # ============================================================
 # RFQ SUMMARY
 # ============================================================
+
+
 def fetch_rfq_summary(
     vendor_account: str
 ) -> Dict[str, Any]:
@@ -465,48 +468,24 @@ def fetch_rfq_summary(
 
         cur.execute(f"""
             SELECT
-
                 RFQID,
-
                 RFQCASEID,
-
                 SUBMISSIONSTATUS,
-
                 DRAFTLINECOUNT
-
             FROM {RFQ_REPLIES_TABLE}
             WITH (NOLOCK)
-
             WHERE VENDORACCOUNT = ?
         """, (vendor_account,))
 
         portal_rows = cur.fetchall()
 
-
     replied_rfq_ids = set()
-
-    submitted_rfq_ids = set()
-
-    partial_expired_caseids = set()
 
     for r in portal_rows:
 
         rfq_id = str(r[0]).strip().upper()
 
-        rfq_caseid = str(r[1]).strip().upper()
-
         replied_rfq_ids.add(rfq_id)
-
-        if r[2] == 1:
-
-            submitted_rfq_ids.add(rfq_id)
-
-        if r[2] == 1 and (r[3] or 0) > 0:
-
-            partial_expired_caseids.add(
-                rfq_caseid
-            )
-
 
     # ========================================================
     # RFQ DATA
@@ -554,7 +533,6 @@ def fetch_rfq_summary(
 
         rows = cur.fetchall()
 
-
     today = (
         datetime.utcnow()
         + timedelta(minutes=330)
@@ -568,11 +546,7 @@ def fetch_rfq_summary(
 
     closing_soon = 0
 
-    expired = 0
-
     for row in rows:
-
-        rfq_caseid = str(row[0]).strip().upper()
 
         rfq_id = str(row[1]).strip().upper()
 
@@ -586,49 +560,26 @@ def fetch_rfq_summary(
         ).date()
 
         # ====================================================
-        # NEW
+        # NEW RFQs
         # ====================================================
         if (
-
             expiry_date >= today
-
-            and
-
-            rfq_id not in replied_rfq_ids
+            and rfq_id not in replied_rfq_ids
         ):
-
             new_count += 1
-
 
         # ====================================================
         # CLOSING SOON
         # ====================================================
         if (
-
             expiry_date >= today
-
-            and
-
-            expiry_date <= closing_limit
+            and expiry_date <= closing_limit
         ):
-
             closing_soon += 1
 
-
-        # ====================================================
-        # EXPIRED
-        # ====================================================
-        if expiry_date < today:
-
-            if rfq_id not in replied_rfq_ids:
-
-                expired += 1
-
-            elif rfq_caseid in partial_expired_caseids:
-
-                expired += 1
-
-
+    # ========================================================
+    # COUNTS FROM EXISTING SERVICES
+    # ========================================================
     submitted = len(
         fetch_submitted_rfqs(
             vendor_account
@@ -641,18 +592,23 @@ def fetch_rfq_summary(
         )
     )
 
+    expired_count = len(
+        fetch_vendor_expired_rfqs(
+            vendor_account
+        )
+    )
+
     total_active = (
-
         new_count
-
         + inprogress_count
-
         + submitted
     )
 
     total_rfq_count = len(rows)
 
-
+    # ========================================================
+    # RESPONSE
+    # ========================================================
     return {
 
         "total_active_rfqs": {
@@ -685,7 +641,7 @@ def fetch_rfq_summary(
         "Expired_bids": {
 
             "count":
-                expired,
+                expired_count,
 
             "subtitle":
                 "Oops! Bid window closed without your response"
@@ -701,10 +657,6 @@ def fetch_rfq_summary(
         }
     }
 
-
-# ============================================================
-# RFQ TAB COUNTS
-# ============================================================
 def fetch_rfq_counts(
     vendor_account: str
 ) -> dict:
@@ -735,31 +687,13 @@ def fetch_rfq_counts(
 
         portal_rows = cur.fetchall()
 
-
     replied_rfq_ids = set()
-
-    submitted_rfq_ids = set()
-
-    partial_expired_caseids = set()
 
     for r in portal_rows:
 
         rfq_id = str(r[0]).strip().upper()
 
-        rfq_caseid = str(r[1]).strip().upper()
-
         replied_rfq_ids.add(rfq_id)
-
-        if r[2] == 1:
-
-            submitted_rfq_ids.add(rfq_id)
-
-        if r[2] == 1 and (r[3] or 0) > 0:
-
-            partial_expired_caseids.add(
-                rfq_caseid
-            )
-
 
     # ========================================================
     # RFQ DATA
@@ -807,19 +741,17 @@ def fetch_rfq_counts(
 
         rows = cur.fetchall()
 
-
     today = (
         datetime.utcnow()
         + timedelta(minutes=330)
     ).date()
 
+    # ========================================================
+    # NEW COUNT
+    # ========================================================
     new_count = 0
 
-    expired_count = 0
-
     for row in rows:
-
-        rfq_caseid = str(row[0]).strip().upper()
 
         rfq_id = str(row[1]).strip().upper()
 
@@ -832,35 +764,15 @@ def fetch_rfq_counts(
             expiry + timedelta(minutes=330)
         ).date()
 
-        # ====================================================
-        # NEW
-        # ====================================================
         if (
-
             expiry_date >= today
-
-            and
-
-            rfq_id not in replied_rfq_ids
+            and rfq_id not in replied_rfq_ids
         ):
-
             new_count += 1
 
-
-        # ====================================================
-        # EXPIRED
-        # ====================================================
-        if expiry_date < today:
-
-            if rfq_id not in replied_rfq_ids:
-
-                expired_count += 1
-
-            elif rfq_caseid in partial_expired_caseids:
-
-                expired_count += 1
-
-
+    # ========================================================
+    # COUNTS FROM SERVICES
+    # ========================================================
     inprogress_count = len(
         fetch_inprogress_rfqs(
             vendor_account
@@ -872,28 +784,24 @@ def fetch_rfq_counts(
             vendor_account
         )
     )
+
     completed_count = len(
-    fetch_completed_rfqs(
-        vendor_account
+        fetch_completed_rfqs(
+            vendor_account
+        )
     )
-)
 
-
-    
-
-    # completed_count = (
-    #     len(submitted_rfq_ids)
-    #     - submitted_count
-    # )
-
-    # if completed_count < 0:
-
-    #     completed_count = 0
-
+    expired_count = len(
+        fetch_vendor_expired_rfqs(
+            vendor_account
+        )
+    )
 
     total_rfq_count = len(rows)
 
-
+    # ========================================================
+    # RESPONSE
+    # ========================================================
     return {
 
         "new":
@@ -914,4 +822,468 @@ def fetch_rfq_counts(
         "total":
             total_rfq_count
     }
+
+
+# def fetch_rfq_summary(
+#     vendor_account: str
+# ) -> Dict[str, Any]:
+
+#     # ========================================================
+#     # PORTAL DB
+#     # ========================================================
+#     with get_connection() as conn:
+
+#         cur = conn.cursor()
+
+#         cur.execute(f"""
+#             SELECT
+
+#                 RFQID,
+
+#                 RFQCASEID,
+
+#                 SUBMISSIONSTATUS,
+
+#                 DRAFTLINECOUNT
+
+#             FROM {RFQ_REPLIES_TABLE}
+#             WITH (NOLOCK)
+
+#             WHERE VENDORACCOUNT = ?
+#         """, (vendor_account,))
+
+#         portal_rows = cur.fetchall()
+
+
+#     replied_rfq_ids = set()
+
+#     submitted_rfq_ids = set()
+
+#     partial_expired_caseids = set()
+
+#     for r in portal_rows:
+
+#         rfq_id = str(r[0]).strip().upper()
+
+#         rfq_caseid = str(r[1]).strip().upper()
+
+#         replied_rfq_ids.add(rfq_id)
+
+#         if r[2] == 1:
+
+#             submitted_rfq_ids.add(rfq_id)
+
+#         if r[2] == 1 and (r[3] or 0) > 0:
+
+#             partial_expired_caseids.add(
+#                 rfq_caseid
+#             )
+
+
+#     # ========================================================
+#     # RFQ DATA
+#     # ========================================================
+#     with get_connection() as conn:
+
+#         cur = conn.cursor()
+
+#         cur.execute(f"""
+#             SELECT
+
+#                 L.RFQCASEID,
+
+#                 T.RFQID,
+
+#                 L.EXPIRYDATETIME
+
+#             FROM {SCHEMA}.D365_PURCHRFQCASETABLE L
+#             WITH (NOLOCK)
+
+#             INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
+#             WITH (NOLOCK)
+
+#                 ON T.RFQCASEID = L.RFQCASEID
+#                AND T.VENDACCOUNT = ?
+
+#             WHERE EXISTS (
+
+#                 SELECT 1
+
+#                 FROM {SCHEMA}.D365_PURCHRFQCASELINE CL
+#                 WITH (NOLOCK)
+
+#                 INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
+#                 WITH (NOLOCK)
+
+#                     ON AVL.ITEMID = CL.ITEMID
+#                    AND AVL.PDSAPPROVEDVENDOR = T.VENDACCOUNT
+#                    AND AVL.VALIDFROM <= GETUTCDATE()
+#                    AND AVL.VALIDTO >= GETUTCDATE()
+
+#                 WHERE CL.RFQCASEID = L.RFQCASEID
+#             )
+#         """, (vendor_account,))
+
+#         rows = cur.fetchall()
+
+
+#     today = (
+#         datetime.utcnow()
+#         + timedelta(minutes=330)
+#     ).date()
+
+#     closing_limit = (
+#         today + timedelta(days=3)
+#     )
+
+#     new_count = 0
+
+#     closing_soon = 0
+
+#     expired = 0
+
+#     for row in rows:
+
+#         rfq_caseid = str(row[0]).strip().upper()
+
+#         rfq_id = str(row[1]).strip().upper()
+
+#         expiry = row[2]
+
+#         if not expiry:
+#             continue
+
+#         expiry_date = (
+#             expiry + timedelta(minutes=330)
+#         ).date()
+
+#         # ====================================================
+#         # NEW
+#         # ====================================================
+#         if (
+
+#             expiry_date >= today
+
+#             and
+
+#             rfq_id not in replied_rfq_ids
+#         ):
+
+#             new_count += 1
+
+
+#         # ====================================================
+#         # CLOSING SOON
+#         # ====================================================
+#         if (
+
+#             expiry_date >= today
+
+#             and
+
+#             expiry_date <= closing_limit
+#         ):
+
+#             closing_soon += 1
+
+
+#         # ====================================================
+#         # EXPIRED
+#         # ====================================================
+#         if expiry_date < today:
+
+#             if rfq_id not in replied_rfq_ids:
+
+#                 expired += 1
+
+#             elif rfq_caseid in partial_expired_caseids:
+
+#                 expired += 1
+
+
+#     submitted = len(
+#         fetch_submitted_rfqs(
+#             vendor_account
+#         )
+#     )
+
+#     inprogress_count = len(
+#         fetch_inprogress_rfqs(
+#             vendor_account
+#         )
+#     )
+
+#     total_active = (
+
+#         new_count
+
+#         + inprogress_count
+
+#         + submitted
+#     )
+
+#     total_rfq_count = len(rows)
+
+
+#     return {
+
+#         "total_active_rfqs": {
+
+#             "count":
+#                 total_active,
+
+#             "subtitle":
+#                 "New, In Progress and Submitted"
+#         },
+
+#         "rfqs_closing_soon": {
+
+#             "count":
+#                 closing_soon,
+
+#             "subtitle":
+#                 "Closing within 3 days"
+#         },
+
+#         "submitted_bids": {
+
+#             "count":
+#                 submitted,
+
+#             "subtitle":
+#                 "Total quotations you have submitted"
+#         },
+
+#         "Expired_bids": {
+
+#             "count":
+#                 expired,
+
+#             "subtitle":
+#                 "Oops! Bid window closed without your response"
+#         },
+
+#         "Total_RFQ_Counts": {
+
+#             "count":
+#                 total_rfq_count,
+
+#             "subtitle":
+#                 "Total RFQs Received"
+#         }
+#     }
+
+
+# ============================================================
+# RFQ TAB COUNTS
+# ============================================================
+# def fetch_rfq_counts(
+#     vendor_account: str
+# ) -> dict:
+
+#     # ========================================================
+#     # PORTAL DB
+#     # ========================================================
+#     with get_connection() as conn:
+
+#         cur = conn.cursor()
+
+#         cur.execute(f"""
+#             SELECT
+
+#                 RFQID,
+
+#                 RFQCASEID,
+
+#                 SUBMISSIONSTATUS,
+
+#                 DRAFTLINECOUNT
+
+#             FROM {RFQ_REPLIES_TABLE}
+#             WITH (NOLOCK)
+
+#             WHERE VENDORACCOUNT = ?
+#         """, (vendor_account,))
+
+#         portal_rows = cur.fetchall()
+
+
+#     replied_rfq_ids = set()
+
+#     submitted_rfq_ids = set()
+
+#     partial_expired_caseids = set()
+
+#     for r in portal_rows:
+
+#         rfq_id = str(r[0]).strip().upper()
+
+#         rfq_caseid = str(r[1]).strip().upper()
+
+#         replied_rfq_ids.add(rfq_id)
+
+#         if r[2] == 1:
+
+#             submitted_rfq_ids.add(rfq_id)
+
+#         if r[2] == 1 and (r[3] or 0) > 0:
+
+#             partial_expired_caseids.add(
+#                 rfq_caseid
+#             )
+
+
+#     # ========================================================
+#     # RFQ DATA
+#     # ========================================================
+#     with get_connection() as conn:
+
+#         cur = conn.cursor()
+
+#         cur.execute(f"""
+#             SELECT
+
+#                 L.RFQCASEID,
+
+#                 T.RFQID,
+
+#                 L.EXPIRYDATETIME
+
+#             FROM {SCHEMA}.D365_PURCHRFQCASETABLE L
+#             WITH (NOLOCK)
+
+#             INNER JOIN {SCHEMA}.D365_PURCHRFQTABLE T
+#             WITH (NOLOCK)
+
+#                 ON T.RFQCASEID = L.RFQCASEID
+#                AND T.VENDACCOUNT = ?
+
+#             WHERE EXISTS (
+
+#                 SELECT 1
+
+#                 FROM {SCHEMA}.D365_PURCHRFQCASELINE CL
+#                 WITH (NOLOCK)
+
+#                 INNER JOIN {SCHEMA}.D365_PDSAPPROVEDVENDORLIST AVL
+#                 WITH (NOLOCK)
+
+#                     ON AVL.ITEMID = CL.ITEMID
+#                    AND AVL.PDSAPPROVEDVENDOR = T.VENDACCOUNT
+#                    AND AVL.VALIDFROM <= GETUTCDATE()
+#                    AND AVL.VALIDTO >= GETUTCDATE()
+
+#                 WHERE CL.RFQCASEID = L.RFQCASEID
+#             )
+#         """, (vendor_account,))
+
+#         rows = cur.fetchall()
+
+
+#     today = (
+#         datetime.utcnow()
+#         + timedelta(minutes=330)
+#     ).date()
+
+#     new_count = 0
+
+#     expired_count = 0
+
+#     for row in rows:
+
+#         rfq_caseid = str(row[0]).strip().upper()
+
+#         rfq_id = str(row[1]).strip().upper()
+
+#         expiry = row[2]
+
+#         if not expiry:
+#             continue
+
+#         expiry_date = (
+#             expiry + timedelta(minutes=330)
+#         ).date()
+
+#         # ====================================================
+#         # NEW
+#         # ====================================================
+#         if (
+
+#             expiry_date >= today
+
+#             and
+
+#             rfq_id not in replied_rfq_ids
+#         ):
+
+#             new_count += 1
+
+
+#         # ====================================================
+#         # EXPIRED
+#         # ====================================================
+#         if expiry_date < today:
+
+#             if rfq_id not in replied_rfq_ids:
+
+#                 expired_count += 1
+
+#             elif rfq_caseid in partial_expired_caseids:
+
+#                 expired_count += 1
+
+
+#     inprogress_count = len(
+#         fetch_inprogress_rfqs(
+#             vendor_account
+#         )
+#     )
+
+#     submitted_count = len(
+#         fetch_submitted_rfqs(
+#             vendor_account
+#         )
+#     )
+#     completed_count = len(
+#     fetch_completed_rfqs(
+#         vendor_account
+#     )
+# )
+
+
+    
+
+#     # completed_count = (
+#     #     len(submitted_rfq_ids)
+#     #     - submitted_count
+#     # )
+
+#     # if completed_count < 0:
+
+#     #     completed_count = 0
+
+
+#     total_rfq_count = len(rows)
+
+
+#     return {
+
+#         "new":
+#             new_count,
+
+#         "in_progress":
+#             inprogress_count,
+
+#         "submitted":
+#             submitted_count,
+
+#         "completed":
+#             completed_count,
+
+#         "expired":
+#             expired_count,
+
+#         "total":
+#             total_rfq_count
+#     }
 

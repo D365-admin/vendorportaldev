@@ -152,19 +152,52 @@ def release_expired_bids():
  
         # ── CHECK ITEMS EXIST ────────────────────────────────
         items_list = payload.get("Item", []) or payload.get("rfqItems", [])
+
         if not items_list:
             mark_failed(row_id, "No items in payload", attempts)
             print(f"[SCHEDULER] ID={row_id} FAILED — no items")
             continue
- 
-        # ── CHECK AT LEAST ONE VALID CONFIRMED LINE ──────────
-        # If all lines are draft (lineStatus=false), this is NOT an error.
-        # Vendor intentionally saved without confirming.
-        # Set status=3 (Draft Only) — silent skip, shows in Expired tab.
-        if not has_valid_lines(payload):
-            _mark_draft_only(row_id)
-            print(f"[SCHEDULER] ID={row_id} SKIPPED — all lines draft, no confirmed lines")
+
+        confirmed_lines = []
+
+        for line in items_list:
+
+            line_status = line.get("lineStatus", False)
+
+            if isinstance(line_status, str):
+                line_status = line_status.lower() == "true"
+
+            if line_status:
+                confirmed_lines.append(line)
+
+        if len(confirmed_lines) == 0:
+
+            mark_all_sent_for_rfq(
+                rfq_id,
+                vendor_account
+            )
+
+            print(
+                f"[SCHEDULER] RFQ={rfq_id} contains only draft lines. "
+                f"Updated SUBMISSIONSTATUS=1 without creating header/lines."
+            )
+
             continue
+
+        # items_list = payload.get("Item", []) or payload.get("rfqItems", [])
+        # if not items_list:
+        #     mark_failed(row_id, "No items in payload", attempts)
+        #     print(f"[SCHEDULER] ID={row_id} FAILED — no items")
+        #     continue
+ 
+        # # ── CHECK AT LEAST ONE VALID CONFIRMED LINE ──────────
+        # # If all lines are draft (lineStatus=false), this is NOT an error.
+        # # Vendor intentionally saved without confirming.
+        # # Set status=3 (Draft Only) — silent skip, shows in Expired tab.
+        # if not has_valid_lines(payload):
+        #     _mark_draft_only(row_id)
+        #     print(f"[SCHEDULER] ID={row_id} SKIPPED — all lines draft, no confirmed lines")
+        #     continue
  
         # ── STEP 1: INSERT HIQ_VENDORBIDSUBMISSIONHEADER ─────
         try:
