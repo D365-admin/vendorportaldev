@@ -33,7 +33,7 @@ RFQ_LINEBID=f"{SCHEMA}.HIQ_VENDORBIDSUBMISSIONLINE"
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 router = APIRouter(prefix="/rfq", tags=["RFQ Reply"])
-
+STATUS_DRAFT_ONLY=3
 
 # ══════════════════════════════════════════════════════════
 # API — VENDOR SUBMITS RFQ REPLY
@@ -868,7 +868,8 @@ def _scheduler_loop():
         try:
             now = datetime.now()
             # if now.hour == 18 and now.minute == 10:
-            if now.hour == 0 and 5 <= now.minute <= 9:
+            # if now.hour == 0 and 5 <= now.minute <= 9:
+            if now.hour == 10 and now.minute == 16:
                 if last_run_date != now.date():
                     last_run_date = now.date()
                     print(f"\n{'='*50}")
