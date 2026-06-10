@@ -233,74 +233,38 @@ def fetch_dashboard_metrics(
     # ========================================================
     # IN PROGRESS
     # ========================================================
-    inprogress_count = 0
+    # ========================================================
+    # IN PROGRESS
+    # ========================================================
+        inprogress_rfqs = fetch_inprogress_rfqs(vendor_account)
 
-    closes_today = 0
+        inprogress_count = len(inprogress_rfqs)
 
-    closes_tomorrow = 0
+        closes_today = 0
+        closes_tomorrow = 0
 
-    if inprogress_rows:
+        today = (
+            datetime.utcnow()
+            + timedelta(minutes=330)
+        ).date()
 
-        rfq_case_ids = [
+        tomorrow = today + timedelta(days=1)
 
-            r[1]
+        for rfq in inprogress_rfqs:
 
-            for r in inprogress_rows
-        ]
+            expiry = rfq.get("expiry_date")
 
-        placeholders = ",".join(
-            ["?"] * len(rfq_case_ids)
-        )
+            if not expiry:
+                continue
 
-        with get_connection() as conn:
+            try:
 
-            cur = conn.cursor()
-
-            cur.execute(f"""
-                SELECT
-
-                    RFQCASEID,
-
-                    EXPIRYDATETIME
-
-                FROM D365_PURCHRFQCASETABLE
-                WITH (NOLOCK)
-
-                WHERE RFQCASEID IN ({placeholders})
-
-                  AND CAST(
-                        DATEADD(
-                            MINUTE,
-                            330,
-                            EXPIRYDATETIME
-                        ) AS DATE
-                      )
-
-                      >=
-
-                      CAST(
-                        DATEADD(
-                            MINUTE,
-                            330,
-                            GETUTCDATE()
-                        ) AS DATE
-                      )
-            """, rfq_case_ids)
-
-            rows = cur.fetchall()
-
-            inprogress_count = len(rows)
-
-            for row in rows:
-
-                expiry = row[1]
-
-                if not expiry:
-                    continue
+                expiry_dt = datetime.fromisoformat(
+                    expiry.replace("Z", "+00:00")
+                )
 
                 expiry_date = (
-                    expiry
-                    + timedelta(minutes=330)
+                    expiry_dt + timedelta(minutes=330)
                 ).date()
 
                 if expiry_date == today:
@@ -310,6 +274,90 @@ def fetch_dashboard_metrics(
                 elif expiry_date == tomorrow:
 
                     closes_tomorrow += 1
+
+            except Exception as e:
+
+                print(
+                    f"[DASHBOARD] Invalid expiry date: "
+                    f"{expiry} - {e}"
+                )
+    # inprogress_count = 0
+
+    # closes_today = 0
+
+    # closes_tomorrow = 0
+
+    # if inprogress_rows:
+
+    #     rfq_case_ids = [
+
+    #         r[1]
+
+    #         for r in inprogress_rows
+    #     ]
+
+    #     placeholders = ",".join(
+    #         ["?"] * len(rfq_case_ids)
+    #     )
+
+    #     with get_connection() as conn:
+
+    #         cur = conn.cursor()
+
+    #         cur.execute(f"""
+    #             SELECT
+
+    #                 RFQCASEID,
+
+    #                 EXPIRYDATETIME
+
+    #             FROM D365_PURCHRFQCASETABLE
+    #             WITH (NOLOCK)
+
+    #             WHERE RFQCASEID IN ({placeholders})
+
+    #               AND CAST(
+    #                     DATEADD(
+    #                         MINUTE,
+    #                         330,
+    #                         EXPIRYDATETIME
+    #                     ) AS DATE
+    #                   )
+
+    #                   >=
+
+    #                   CAST(
+    #                     DATEADD(
+    #                         MINUTE,
+    #                         330,
+    #                         GETUTCDATE()
+    #                     ) AS DATE
+    #                   )
+    #         """, rfq_case_ids)
+
+    #         rows = cur.fetchall()
+
+    #         inprogress_count = len(rows)
+
+    #         for row in rows:
+
+    #             expiry = row[1]
+
+    #             if not expiry:
+    #                 continue
+
+    #             expiry_date = (
+    #                 expiry
+    #                 + timedelta(minutes=330)
+    #             ).date()
+
+    #             if expiry_date == today:
+
+    #                 closes_today += 1
+
+    #             elif expiry_date == tomorrow:
+
+    #                 closes_tomorrow += 1
 
 
     # ========================================================
