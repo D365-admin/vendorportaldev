@@ -18,7 +18,8 @@ from app.db.bids_repo import (
 )
 from app.services.notification_service import notify_new_rfq
 from app.db.base import get_connection, get_connection
-from app.core.config import settings
+from app.core.config import settings 
+from datetime import datetime, timedelta
 SCHEMA=settings.DB_SCHEMA
 VENDOR_USER_TABLE = f"{SCHEMA}.HIQ_VENDORPORTALUSER"
 OTP_TABLE = f"{SCHEMA}.HIQ_VENDOROTP"
@@ -892,29 +893,60 @@ def sync_rfq_decision_notifications():
 # ══════════════════════════════════════════════════════════
 
 _scheduler_thread = None
-_stop_event       = threading.Event()
+_stop_event = threading.Event()
 
 
 def _scheduler_loop():
     last_run_date = None
+
     while not _stop_event.is_set():
         try:
-            now = datetime.now()
-            # if now.hour == 18 and now.minute == 10:
-            if now.hour == 0 and 5 <= now.minute <= 9:
+            # IST time
+            now = datetime.utcnow() + timedelta(minutes=330)
+            if now.hour == 0 and 30 <= now.minute <= 34:
+            # if now.hour == 0 and 5 <= now.minute <= 9:
                 if last_run_date != now.date():
                     last_run_date = now.date()
-                    print(f"\n{'='*50}")
-                    print(f"[SCHEDULER] Midnight job — {now}")
-                    print(f"{'='*50}")
 
-                    release_expired_bids()          # VENDORRFQREPLIES → HEADER + LINE
-                    sync_new_rfq_notifications()    # D365 RFQ → notifications
-                    sync_rfq_decision_notifications()  # D365 decisions → notifications
-                    send_expiry_reminder_emails()   # expiry reminder emails
+                    print(f"\n{'=' * 50}")
+                    print(f"[SCHEDULER] Midnight IST job — {now}")
+                    print(f"{'=' * 50}")
+
+                    release_expired_bids()
+                    sync_new_rfq_notifications()
+                    sync_rfq_decision_notifications()
+                    send_expiry_reminder_emails()
+
         except Exception as e:
             print(f"[SCHEDULER] Error: {e}")
+
         time.sleep(60)
+
+
+# _scheduler_thread = None
+# _stop_event       = threading.Event()
+
+
+# def _scheduler_loop():
+#     last_run_date = None
+#     while not _stop_event.is_set():
+#         try:
+#             now = datetime.now()
+#             # if now.hour == 18 and now.minute == 10:
+#             if now.hour == 0 and 5 <= now.minute <= 9:
+#                 if last_run_date != now.date():
+#                     last_run_date = now.date()
+#                     print(f"\n{'='*50}")
+#                     print(f"[SCHEDULER] Midnight job — {now}")
+#                     print(f"{'='*50}")
+
+#                     release_expired_bids()          # VENDORRFQREPLIES → HEADER + LINE
+#                     sync_new_rfq_notifications()    # D365 RFQ → notifications
+#                     sync_rfq_decision_notifications()  # D365 decisions → notifications
+#                     send_expiry_reminder_emails()   # expiry reminder emails
+#         except Exception as e:
+#             print(f"[SCHEDULER] Error: {e}")
+#         time.sleep(60)
 
 
 def start_scheduler():
