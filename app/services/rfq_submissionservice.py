@@ -128,7 +128,7 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                    AND L.RFQID = H.RFQID
                    AND L.VENDORACCOUNT = H.VENDORACCOUNT
                 WHERE UPPER(H.VENDORACCOUNT) = UPPER(?)
-                  AND H.STATUS IN (0, 2)
+                  AND H.STATUS = 2
                   AND L.ITEMNUMBER IN ({placeholders})
                   AND EXISTS
                 (

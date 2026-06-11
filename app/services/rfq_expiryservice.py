@@ -5,41 +5,86 @@ from app.core.config import settings
 SCHEMA = settings.DB_SCHEMA
 
 RFQ_REPLIES_TABLE = f"{SCHEMA}.HIQ_VendorRFQReplies"
-
+RFQ_BID_SUB = f"{SCHEMA}.HIQ_VENDORBIDSUBMISSIONHEADER"
 
 def fetch_vendor_expired_rfqs(vendor_account: str):
 
     # ========================================================
     # STEP 1 - FETCH LATEST REPLIES
     # ========================================================
+
+
     reply_query = f"""
-        SELECT
-            RFQCASEID,
-            RFQID,
-            VENDORACCOUNT,
-            SUBMISSIONSTATUS,
-            DRAFTLINECOUNT,
-            ID
-        FROM (
-            SELECT *,
-                ROW_NUMBER() OVER (
-                    PARTITION BY RFQCASEID, VENDORACCOUNT
-                    ORDER BY ID DESC
-                ) AS RN
-            FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
-            WHERE VENDORACCOUNT = ?
-        ) X
-        WHERE RN = 1
+    WITH LatestReply AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY RFQCASEID, VENDORACCOUNT
+                ORDER BY ID DESC
+            ) RN
+        FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
+        WHERE VENDORACCOUNT = ?
+    ),
+    LatestHeader AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY RFQID, VENDORACCOUNT
+                ORDER BY ID DESC
+            ) RN
+        FROM {RFQ_BID_SUB} WITH (NOLOCK)
+        WHERE VENDORACCOUNT = ?
+    )
+
+    SELECT
+        R.RFQCASEID,
+        R.RFQID,
+        R.VENDORACCOUNT,
+        R.SUBMISSIONSTATUS,
+        R.DRAFTLINECOUNT,
+        R.CONFIRMEDLINECOUNT,
+        R.ID,
+        H.STATUS AS BIDHEADERSTATUS
+
+    FROM LatestReply R
+
+    LEFT JOIN LatestHeader H
+        ON H.RFQID = R.RFQID
+    AND H.VENDORACCOUNT = R.VENDORACCOUNT
+    AND H.RN = 1
+
+    WHERE R.RN = 1
     """
+
+    # reply_query = f"""
+    #     SELECT
+    #         RFQCASEID,
+    #         RFQID,
+    #         VENDORACCOUNT,
+    #         SUBMISSIONSTATUS,
+    #         DRAFTLINECOUNT,
+    #         ID
+    #     FROM (
+    #         SELECT *,
+    #             ROW_NUMBER() OVER (
+    #                 PARTITION BY RFQCASEID, VENDORACCOUNT
+    #                 ORDER BY ID DESC
+    #             ) AS RN
+    #         FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
+    #         WHERE VENDORACCOUNT = ?
+    #     ) X
+    #     WHERE RN = 1
+    # """
 
     with get_connection() as conn:
 
         cursor = conn.cursor()
-
         cursor.execute(
-            reply_query,
-            vendor_account
-        )
+        reply_query,
+        (vendor_account, vendor_account)
+    )
+        # cursor.execute(
+        #     reply_query,
+        #     vendor_account
+        # )
 
         reply_rows = cursor.fetchall()
 
@@ -156,6 +201,8 @@ def fetch_vendor_expired_rfqs(vendor_account: str):
         # ----------------------------------------------------
         # NOT OPENED
         # ----------------------------------------------------
+       
+
         if not latest_reply:
 
             status = "Not Opened"
@@ -167,6 +214,7 @@ def fetch_vendor_expired_rfqs(vendor_account: str):
         elif (
             latest_reply["SUBMISSIONSTATUS"] == 1
             and (latest_reply["DRAFTLINECOUNT"] or 0) > 0
+            and latest_reply.get("BIDHEADERSTATUS") == 2
         ):
 
             status = "Drafted"

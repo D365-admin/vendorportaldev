@@ -20,7 +20,7 @@ from app.core.config import settings
 SCHEMA = settings.DB_SCHEMA
 
 RFQ_REPLIES_TABLE = f"{SCHEMA}.HIQ_VendorRFQReplies"
-
+RFQ_BID_SUB = f"{SCHEMA}.HIQ_VENDORBIDSUBMISSIONHEADER"
 
 def fetch_inprogress_rfqs(
     vendor_account: str
@@ -31,47 +31,94 @@ def fetch_inprogress_rfqs(
     # FETCH LATEST RFQ REPLIES
     # ========================================================
     reply_query = f"""
-        SELECT
-
-            RFQID,
-            VENDORACCOUNT,
-            CREATEDDATETIME,
-            SUBMISSIONSTATUS,
-            ID,
-            CONFIRMSAVE,
-            UNCONFIRMEDLINECOUNT,
-            TOTALLINES,
-            DRAFTLINECOUNT,
-            CONFIRMEDLINECOUNT
-
-        FROM (
-
-            SELECT *,
-
-                ROW_NUMBER() OVER (
-                    PARTITION BY RFQID, VENDORACCOUNT
-                    ORDER BY ID DESC
-                ) AS RN
-
-            FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
-
-            WHERE VENDORACCOUNT = ?
-
-        ) X
-
-        WHERE
-            RN = 1
-            AND SUBMISSIONSTATUS IN (0, 2)
+    WITH LatestReply AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY RFQID, VENDORACCOUNT
+                ORDER BY ID DESC
+            ) AS RN
+        FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
+        WHERE VENDORACCOUNT = ?
+    ),
+    LatestHeader AS (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY RFQID, VENDORACCOUNT
+                ORDER BY ID DESC
+            ) AS RN
+        FROM {RFQ_BID_SUB} WITH (NOLOCK)
+        WHERE VENDORACCOUNT = ?
+    )
+    SELECT
+        R.RFQID,
+        R.VENDORACCOUNT,
+        R.CREATEDDATETIME,
+        R.SUBMISSIONSTATUS,
+        R.ID,
+        R.CONFIRMSAVE,
+        R.UNCONFIRMEDLINECOUNT,
+        R.TOTALLINES,
+        R.DRAFTLINECOUNT,
+        R.CONFIRMEDLINECOUNT,
+        H.STATUS AS BIDHEADERSTATUS
+    FROM LatestReply R
+    LEFT JOIN LatestHeader H
+        ON H.RFQID = R.RFQID
+       AND H.VENDORACCOUNT = R.VENDORACCOUNT
+       AND H.RN = 1
+    WHERE R.RN = 1
+      AND (
+            R.SUBMISSIONSTATUS IN (0, 2)
+            OR H.STATUS IN (0,1)
+          )
     """
+    # reply_query = f"""
+    #     SELECT
+
+    #         RFQID,
+    #         VENDORACCOUNT,
+    #         CREATEDDATETIME,
+    #         SUBMISSIONSTATUS,
+    #         ID,
+    #         CONFIRMSAVE,
+    #         UNCONFIRMEDLINECOUNT,
+    #         TOTALLINES,
+    #         DRAFTLINECOUNT,
+    #         CONFIRMEDLINECOUNT
+
+    #     FROM (
+
+    #         SELECT *,
+
+    #             ROW_NUMBER() OVER (
+    #                 PARTITION BY RFQID, VENDORACCOUNT
+    #                 ORDER BY ID DESC
+    #             ) AS RN
+
+    #         FROM {RFQ_REPLIES_TABLE} WITH (NOLOCK)
+
+    #         WHERE VENDORACCOUNT = ?
+
+    #     ) X
+
+    #     WHERE
+    #         RN = 1
+    #         AND SUBMISSIONSTATUS IN (0, 2)
+    # """
 
     with get_connection() as conn:
 
         cursor = conn.cursor()
-
         cursor.execute(
             reply_query,
+            vendor_account,
             vendor_account
         )
+
+        # cursor.execute(
+        #     reply_query,
+        #     vendor_account
+        # )
 
         reply_rows = cursor.fetchall()
 
@@ -339,14 +386,14 @@ def fetch_inprogress_rfqs(
                 reply["CONFIRMEDLINECOUNT"],
 
             "draftlinecount":
-                reply["DRAFTLINECOUNT"]
+                reply["DRAFTLINECOUNT"],
+            "bid_header_status": reply.get("BIDHEADERSTATUS")
         })
 
     # ========================================================
     # FINAL RETURN
     # ========================================================
     return result
-
 
 
 # from app.utils.lastused_time import format_last_edited
