@@ -39,6 +39,26 @@ def parse_date_for_db(val):
             pass
     return val or None
 
+from datetime import datetime
+
+def parse_utc_datetime(val):
+    if not val:
+        return None
+
+    val = str(val).strip()
+
+    try:
+        # Convert UTC ISO format and remove Z
+        if val.endswith("Z"):
+            return datetime.strptime(
+                val,
+                "%Y-%m-%dT%H:%M:%SZ"
+            ).strftime("%Y-%m-%d %H:%M:%S")
+
+        return val
+
+    except Exception:
+        return val
 
 def fmt_datetime_ms(val=None):
     if not val:

@@ -114,7 +114,7 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                     H.RFQID,
                     H.VENDORACCOUNT,
                     H.CREATEDDATETIME AS SUBMITTED_ON,
-                    H.EXPIRYDATE AS CLOSING_DATE,
+                    C.EXPIRYDATETIME AS CLOSING_DATE,
                     H.REPLYDELIVERYDATE AS DELIVERY_DATE,
                     H.REPLYMODEOFDELIVERY AS DELIVERY_MODE,
                     H.REPLYDELIVERYTERMS AS DELIVERY_TERM,
@@ -127,6 +127,8 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                     ON L.HEADERID = H.ID
                    AND L.RFQID = H.RFQID
                    AND L.VENDORACCOUNT = H.VENDORACCOUNT
+                LEFT JOIN {SCHEMA}.D365_PURCHRFQCASETABLE C WITH (NOLOCK)
+                 ON UPPER(C.RFQCASEID) = UPPER(H.RFQCASEID)
                 WHERE UPPER(H.VENDORACCOUNT) = UPPER(?)
                   AND H.STATUS = 2
                   AND L.ITEMNUMBER IN ({placeholders})
@@ -156,7 +158,7 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                     H.RFQID,
                     H.VENDORACCOUNT,
                     H.CREATEDDATETIME,
-                    H.EXPIRYDATE,
+                    C.EXPIRYDATETIME,
                     H.REPLYDELIVERYDATE,
                     H.REPLYMODEOFDELIVERY,
                     H.REPLYDELIVERYTERMS,
