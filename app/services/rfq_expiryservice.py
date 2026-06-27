@@ -147,7 +147,7 @@ def fetch_vendor_expired_rfqs(vendor_account: str):
                     330,
                     C.EXPIRYDATETIME
                 ) AS DATE
-            ) <= CAST(GETDATE() AS DATE)
+            ) < CAST(GETDATE() AS DATE)
 
         AND EXISTS (
             SELECT 1
