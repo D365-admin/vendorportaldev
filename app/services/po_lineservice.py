@@ -161,14 +161,18 @@ def get_po_details(
     # ========================================================
     # TOTAL VALUE
     # ========================================================
-    total_value = sum(
+    # total_value = sum(
 
-        float(
-            row["NETAMOUNT"] or 0
-        )
+    #     float(
+    #         row["NETAMOUNT"] or 0
+    #     )
 
+    #     for row in data
+    # )
+    total_value = round(sum(
+        float(row["NETAMOUNT"] or 0)
         for row in data
-    )
+    ), 2)
 
     # ========================================================
     # HEADER STATUS
