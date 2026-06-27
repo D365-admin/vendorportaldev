@@ -146,7 +146,7 @@ def fetch_submitted_rfqs(vendor_account: str) -> List[Dict[str, Any]]:
                                 PARTITION BY RFQID, LINENUM
                                 ORDER BY RECID DESC
                             ) RN
-                        FROM sandbox.D365_PURCHRFQLINE
+                        FROM {SCHEMA}.D365_PURCHRFQLINE
                     ) X
                     WHERE X.RFQID = H.RFQID
                     AND X.LINENUM = L.LINENUMBER
