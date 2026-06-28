@@ -214,11 +214,24 @@ def fetch_vendor_expired_rfqs(vendor_account: str):
         elif (
             latest_reply["SUBMISSIONSTATUS"] == 1
             and (latest_reply["DRAFTLINECOUNT"] or 0) > 0
-            and latest_reply.get("BIDHEADERSTATUS") == 2
+            and (
+                latest_reply.get("BIDHEADERSTATUS") == 2
+                or (
+                    latest_reply.get("BIDHEADERSTATUS") is None
+                    and (latest_reply["CONFIRMEDLINECOUNT"] or 0) == 0
+                )
+            )
         ):
-
             status = "Drafted"
             include_record = True
+        # elif (
+        #     latest_reply["SUBMISSIONSTATUS"] == 1
+        #     and (latest_reply["DRAFTLINECOUNT"] or 0) > 0
+        #     and latest_reply.get("BIDHEADERSTATUS") == 2
+        # ):
+
+        #     status = "Drafted"
+        #     include_record = True
 
         else:
 
