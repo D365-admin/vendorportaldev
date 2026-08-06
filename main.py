@@ -107,6 +107,18 @@ def health():
         "service": "Vendor Portal API"
     }
 
+from app.api.routes.vendoronbaordingform_router import router as vendor_onboarding_router
+from app.api.routes.vendoronboardinglogin_router import router as vendor_onboarding_login_router
+from app.api.routes.vendoronboard_dropdown_router import router as vendor_onboarding_dropdown_router 
+from app.api.routes.attachment_router import router as vendor_onboarding_attachment_router  
+from app.api.routes.taxreg_router import router as taxreg_router
+from app.api.routes.termslastest_router import router as termlastest_router
+app.include_router(taxreg_router) 
+app.include_router(vendor_onboarding_router)
+app.include_router(vendor_onboarding_login_router)
+app.include_router(vendor_onboarding_dropdown_router)
+app.include_router(vendor_onboarding_attachment_router)
+app.include_router(termlastest_router)
 # from fastapi import FastAPI
 # from fastapi.middleware.cors import CORSMiddleware
 # from app.core.config import settings
