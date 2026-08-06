@@ -2,6 +2,7 @@ from app.db.base import (
     get_connection
 )
 
+<<<<<<< HEAD
 from app.utils.date_utils import (
     format_date
 )
@@ -64,6 +65,38 @@ def fetch_bid_materials(
             col[0]
             for col in cursor.description
         ]
+=======
+def fetch_bid_materials(vendor_account: str):
+    query = """
+        SELECT
+            P.ITEMID,
+            P.NAME AS NAMEALIAS,
+            P.VALIDFROM,
+            P.VALIDTO
+        FROM D365_PDSAPPROVEDVENDORLIST P WITH (NOLOCK)
+        WHERE LTRIM(RTRIM(P.PDSAPPROVEDVENDOR)) = ?
+          AND P.VALIDFROM <= GETDATE()
+          AND P.VALIDTO >= GETDATE()
+        ORDER BY P.ITEMID
+        """
+#     query = """
+#         SELECT
+#     P.ITEMID,
+#     I.NAMEALIAS,
+#     P.VALIDFROM,
+#     P.VALIDTO
+# FROM PDSAPPROVEDVENDORLIST P WITH (NOLOCK)
+# LEFT JOIN INVENTTABLE I WITH (NOLOCK)
+#     ON LTRIM(RTRIM(P.ITEMID)) = LTRIM(RTRIM(I.ITEMID))
+# WHERE LTRIM(RTRIM(P.PDSAPPROVEDVENDOR)) = ?
+# AND P.VALIDFROM <= GETDATE()
+# AND P.VALIDTO >= GETDATE()
+# ORDER BY P.ITEMID
+#     """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, vendor_account)
+>>>>>>> 0653774 (commit prospector)
 
         rows = cursor.fetchall()
 
@@ -118,6 +151,7 @@ def fetch_vendor_profile(
         "phone": None,
 
         "address": None,
+<<<<<<< HEAD
 
         "name": None,
 
@@ -145,16 +179,39 @@ def fetch_vendor_profile(
 
     with get_connection() as conn:
 
-        cursor = conn.cursor()
+=======
+        "name":None,
+        "city":None
+    }
 
+    with get_connection()  as conn:
+>>>>>>> 0653774 (commit prospector)
+        cursor = conn.cursor()
+        query="""SELECT TOP 1
+            NAME,
+            EMAIL,
+            PHONENUMBER,
+            ADDRESS,
+            CITY
+        FROM D365_VENDORMASTER WITH (NOLOCK)
+        WHERE LTRIM(RTRIM(ACCOUNTNUM)) = ?
+    """
+
+<<<<<<< HEAD
         cursor.execute(
             query,
             vendor_account
         )
+=======
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, vendor_account)
+>>>>>>> 0653774 (commit prospector)
 
         row = cursor.fetchone()
 
         if row:
+<<<<<<< HEAD
 
             profile["name"] = row.NAME
 
@@ -394,3 +451,52 @@ def fetch_vendor_profile(
 #     #     cursor.close()
 
 #     # return profile 
+=======
+            profile["name"] = row.NAME
+            profile["email"] = row.EMAIL
+            profile["phone"] = row.PHONENUMBER
+            profile["address"] = row.ADDRESS
+            profile["city"] = row.CITY
+
+        cursor.close()
+
+    return profile
+        # # 🔹 Fetch Email + Phone
+        # electronic_query = """
+        #     SELECT TYPE, LOCATOR
+        #     FROM HIQ_vendorELECTRONICADDRESSVIEW WITH (NOLOCK)
+        #     WHERE ACCOUNTNUM = ?
+        #     AND ISPRIMARY1 = 1
+        # """
+
+    #     cursor.execute(electronic_query, vendor_account)
+    #     electronic_rows = cursor.fetchall()
+
+    #     for row in electronic_rows:
+    #         type = row.TYPE
+    #         locator = row.LOCATOR
+ 
+    #         if type == 2:
+    #             profile["email"] = locator
+    #         elif type == 1:
+    #             profile["phone"] = locator
+
+    #     # 🔹 Fetch Address
+    #     address_query = """
+    #         SELECT TOP 1 ADDRESS,NAME,city
+    #         FROM HIQ_vendorPostalADDRESSVIEW WITH (NOLOCK)
+    #         WHERE ACCOUNTNUM = ?
+    #         AND ISPRIMARY = 1
+    #     """
+
+    #     cursor.execute(address_query, vendor_account)
+    #     address_row = cursor.fetchone()
+
+    #     if address_row:
+    #         profile["address"] = address_row.ADDRESS
+    #         profile["name"]=address_row.NAME
+    #         profile["city"]=address_row.city
+    #     cursor.close()
+
+    # return profile 
+>>>>>>> 0653774 (commit prospector)
