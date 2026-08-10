@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import settings
-from app.db.base import get_secondary_connection
+from app.db.base import get_secondary_connection,get_connection
 from app.schemas.vendoroboardingattach_schema import (
     AttachmentContentRequest,
 )
