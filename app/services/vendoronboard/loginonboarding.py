@@ -12,7 +12,7 @@ from jose import jwt
 from app.core.config import settings
 from app.db.base import (
     get_connection,
-    get_secondary_connection,
+    get_connection,
 )
 
 
