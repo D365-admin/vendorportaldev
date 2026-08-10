@@ -45,7 +45,7 @@ def get_latest_terms_pdf(
     else:
         normalized_version_id = None
 
-    with get_secondary_connection() as conn:
+    with get_connection()as conn:
         cursor = conn.cursor()
 
         try:

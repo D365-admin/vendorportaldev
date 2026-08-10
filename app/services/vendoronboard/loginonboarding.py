@@ -262,7 +262,7 @@ def _fetch_vendor_login_context(
     No OTP data is read here.
     """
 
-    with get_secondary_connection() as connection:
+    with get_connection()as connection:
         cursor = connection.cursor()
 
         try:

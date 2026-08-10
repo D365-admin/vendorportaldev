@@ -14,7 +14,7 @@ SECONDARY_SCHEMA = getattr(
 def tax_registration_check(tax_registration_number: str) -> dict:
     tax_registration_number = tax_registration_number.strip()
 
-    with get_secondary_connection() as conn:
+    with get_connection()as conn:
         cursor = conn.cursor()
 
         cursor.execute(

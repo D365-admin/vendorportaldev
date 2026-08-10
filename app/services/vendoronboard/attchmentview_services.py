@@ -150,7 +150,7 @@ def fetch_attachment_content(
         )
     )
 
-    with get_secondary_connection() as connection:
+    with get_connection()as connection:
         cursor = connection.cursor()
 
         try:
@@ -443,7 +443,7 @@ def fetch_attachment_content(
 #     FileExtension and ContentType are fetched from the database.
 #     """
 
-#     with get_secondary_connection() as connection:
+#     with get_connection()as connection:
 #         cursor = connection.cursor()
 
 #         try:
