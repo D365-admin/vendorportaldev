@@ -18,7 +18,7 @@ def tax_registration_check(tax_registration_number: str) -> dict:
         cursor = conn.cursor()
 
         cursor.execute(
-            """
+            f"""
             SELECT TOP 1 RegistrationNumber
             FROM {SECONDARY_SCHEMA}.TAXREGISTRATIONNUMBERS_IN
             WHERE UPPER(LTRIM(RTRIM(RegistrationNumber))) = UPPER(?)
