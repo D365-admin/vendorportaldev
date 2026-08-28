@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # ── HTTP ────────────────────────────────────────────────
     HTTP_TIMEOUT_SECONDS: int = 60
     OTP_EXPIRE_MINUTES: int = 10
-
+    OTP_MAX_ATTEMPTS : int = 5
     # ── Email ───────────────────────────────────────────────
     MAIL_SERVER: str = "smtp.office365.com"
     MAIL_PORT: int = 587
